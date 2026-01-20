@@ -1,0 +1,26 @@
+# Lake build artifacts
+.lake/
+lake-packages/
+build/
+
+# Editor files
+.vscode/
+*.swp
+*.swo
+*~
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lean caches
+*.olean
+*.ilean
+*.trace
+
+# Local configuration
+lakefile.olean
+
+# Aristotle output files
+*-output.lean
