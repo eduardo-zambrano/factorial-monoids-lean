@@ -4,38 +4,59 @@ A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labele
 
 ## Overview
 
-This project proves that under axioms PP-D (powers distinct) and CFI (coprime parts factor independently), a reduced atomic commutative monoid is factorial. The main algebraic result is `cor_factorial` (Corollary 8.4 in the paper).
+This project proves Theorem 9.1 from the paper: under axioms PP-D (powers distinct), CFI (coprime parts factor independently), and CPL (coprime products exist at every level), a reduced atomic commutative monoid M is isomorphic to (ℕ, ×). The main result is `thm_main` in `MainTheorem.lean`.
 
 ## Logical Structure of the Proof
 
 ```
-                         AXIOMS
-               ┌───────────┴───────────┐
-               │                       │
-             PP-D                     CFI
-               │                       │
-               │     ┌─────────────────┼─────────────────┐
-               │     │                 │                 │
-               │     ▼                 │                 ▼
-               │   Prop_CFI_implies_PPP│         atoms_are_prime
-               │   (Prop 5.3)          │
-               │     │                 │                 │
-               │     ▼                 │                 │
-               │   PP-P                │                 │
-               │     │                 │                 │
-               └─────┴────────┬────────┴─────────────────┘
-                              │
-                              ▼
-                     prop_val_additive
-                     (Prop 8.3)
-                              │
-                              ▼
-                       cor_factorial
-                       (Corollary 8.4)
-                       M is factorial
+                                    AXIOMS
+              ┌───────────────────────┼───────────────────────┐
+              │                       │                       │
+            PP-D                     CFI                     CPL
+              │                       │                       │
+              │     ┌─────────────────┼───────────────┐       │
+              │     │                 │               │       │
+              │     ▼                 │               ▼       │
+              │   Prop_CFI_implies_PPP│       atoms_are_prime │
+              │   (Prop 5.3)          │                       │
+              │     │                 │               │       │
+              │     ▼                 │               │       │
+              │   PP-P                │               │       │
+              │     │                 │               │       │
+              └─────┴────────┬────────┴───────────────┘       │
+                             │                                │
+                             ▼                                │
+                    prop_val_additive                         │
+                    (Prop 8.3)                                │
+                             │                                │
+                             ▼                                ▼
+                      cor_factorial              atoms_infinite_of_CPL
+                      (Corollary 8.4)
+                             │                                │
+                             └───────────────┬────────────────┘
+                                             │
+                                             ▼
+                                         thm_main
+                                       (Theorem 9.1)
+                                        M ≅ (ℕ, ×)
 ```
 
 ## Proof Structure in the Lean Files
+
+### thm_main (Theorem 9.1)
+**File:** `MainTheorem.lean:157`
+**Statement:** Under PP-D, CFI, and CPL, M is factorial with infinitely many atoms, hence M ≅ (ℕ, ×).
+**Proof uses:**
+- `cor_factorial` for the factorial structure (part a)
+- `atoms_infinite_of_CPL` for infinite atoms (part b)
+
+### atoms_infinite_of_CPL
+**File:** `MainTheorem.lean:120`
+**Statement:** Under CPL, the atom set is infinite.
+**Proof uses:**
+- `exists_injective_atom_choice` to extract distinct atoms from coprime non-units
+- `nodup_of_pairwise_coprime` to show coprime non-units have no duplicates
+- Pigeonhole argument: n+1 coprime non-units require n+1 distinct atoms
 
 ### cor_factorial (Corollary 8.4)
 **File:** `MasterFormula_v2_aristotle.lean:656`
@@ -71,20 +92,23 @@ This project proves that under axioms PP-D (powers distinct) and CFI (coprime pa
 ## File Dependency Chain
 
 ```
-Basic.lean                        -- Definitions: Reduced, Atomic, CFI, PP-D, PP-P, F_k
+Basic.lean                        -- Definitions: Reduced, Atomic, CFI, PP-D, PP-P, CPL, F_k
   └─ Utilities.lean               -- Transfer lemmas, Disjoint_Support_implies_Coprime
        └─ AtomDvdPower.lean       -- atom_dvd_power_eq_of_CFI
             └─ LocalPurity.lean   -- Prop_CFI_implies_PPP (Prop 5.3)
-                 └─ LocalCharacterization.lean  -- Lemma_PP_Unique (Lem 6.1), Theorem_Local_SB (Thm 6.2)
-                      └─ GlobalMultiplicativity.lean  -- prop_coprime_mult (Prop 7.2)
+                 └─ LocalCharacterization.lean
+                      └─ GlobalMultiplicativity.lean
                            └─ AtomsArePrime_v2_aristotle.lean  -- atoms_are_prime
                                 └─ MasterFormula_v2_aristotle.lean  -- cor_factorial (Cor 8.4)
+                                     └─ MainTheorem.lean  -- thm_main (Thm 9.1)
 ```
 
 ## Proven Results
 
 | Lean Name | Paper Ref | Description |
 |-----------|-----------|-------------|
+| `thm_main` | Theorem 9.1 | PP-D + CFI + CPL implies M ≅ (ℕ, ×) |
+| `atoms_infinite_of_CPL` | — | CPL implies infinitely many atoms |
 | `cor_factorial` | Corollary 8.4 | PP-D + CFI implies M is factorial |
 | `prop_val_additive` | Proposition 8.3 | Additivity of p-adic valuations |
 | `Prop_CFI_implies_PPP` | Proposition 5.3 | CFI implies PP-P |
