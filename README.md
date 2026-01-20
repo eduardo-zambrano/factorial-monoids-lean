@@ -6,9 +6,44 @@ A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labele
 
 This project proves that under axioms PP-D (powers distinct) and CFI (coprime parts factor independently), a reduced atomic commutative monoid is factorial. The main algebraic result is `cor_factorial` (Corollary 8.4 in the paper).
 
-## Proof Structure in the Lean Files
+## Logical Structure of the Proof
 
-The formalization builds up to `cor_factorial` through the following chain of key results:
+```
+                              AXIOMS
+                    ┌──────────┴──────────┐
+                    │                     │
+                  PP-D                   CFI
+                    │                     │
+                    │      ┌──────────────┼──────────────┐
+                    │      │              │              │
+                    │      ▼              │              ▼
+                    │  Prop_CFI_implies_PPP             atoms_are_prime
+                    │  (Prop 5.3)         │             (CFI => atoms prime)
+                    │      │              │                   │
+                    │      ▼              │                   │
+                    │    PP-P             │                   │
+                    │      │              │                   │
+                    ├──────┤              │                   │
+                    │      │              │                   │
+                    ▼      ▼              ▼                   │
+              Lemma_PP_Unique    prop_coprime_mult            │
+              (Lemma 6.1)        (Prop 7.2)                   │
+                    │            F_k multiplicative           │
+                    │            on coprime inputs            │
+                    ▼                                         │
+              Theorem_Local_SB                                │
+              (Theorem 6.2)                                   │
+              F_k(p^e) = C(e+k-1,k-1)                         │
+                    │                                         │
+                    └─────────────┬───────────────────────────┘
+                                  │
+                                  ▼
+                           cor_factorial
+                           (Corollary 8.4)
+                           M is factorial
+```
+
+## Proof Structure in the Lean Files
 
 ### cor_factorial (Corollary 8.4)
 **File:** `MasterFormula_v2_aristotle.lean:656`
@@ -48,7 +83,6 @@ The formalization builds up to `cor_factorial` through the following chain of ke
 **Proof uses:**
 - `Lemma_PP_Unique` (Lemma 6.1) to show factorizations of p^e stay in powers of p
 - PP-D to count weak compositions bijectively
-- Direct combinatorial argument matching factorizations to compositions
 
 ### Lemma_PP_Unique (Lemma 6.1)
 **File:** `LocalCharacterization.lean:34`
@@ -72,37 +106,31 @@ The formalization builds up to `cor_factorial` through the following chain of ke
 - `prop_coprime_mult` for multiplicativity
 - `count_atom` showing F_k(p) = k
 
-## Import Dependency Chain
+## File Dependency Chain
 
 ```
 Basic.lean                        -- Definitions: Reduced, Atomic, CFI, PP-D, PP-P, F_k
   └─ Utilities.lean               -- Transfer lemmas, Disjoint_Support_implies_Coprime
        └─ AtomDvdPower.lean       -- atom_dvd_power_eq_of_CFI
-            └─ LocalPurity.lean   -- Prop_CFI_implies_PPP (Prop 5.3), Blockwise_CFI_2 (Lem 5.1)
+            └─ LocalPurity.lean   -- Prop_CFI_implies_PPP (Prop 5.3)
                  └─ LocalCharacterization.lean  -- Lemma_PP_Unique (Lem 6.1), Theorem_Local_SB (Thm 6.2)
                       └─ GlobalMultiplicativity.lean  -- prop_coprime_mult (Prop 7.2)
                            └─ AtomsArePrime_v2_aristotle.lean  -- atoms_are_prime
                                 └─ MasterFormula_v2_aristotle.lean  -- cor_factorial (Cor 8.4)
-                                     └─ MainTheorem.lean  -- thm_main (Thm 9.1)
 ```
 
-## Status of Key Results
+## Proven Results
 
-| Lean Name | Paper Ref | Status |
-|-----------|-----------|--------|
-| `cor_factorial` | Corollary 8.4 | **Proven** |
-| `prop_val_additive` | Proposition 8.3 | **Proven** |
-| `cor_squarefree` | Corollary 7.3 | **Proven** |
-| `prop_coprime_mult` | Proposition 7.2 | **Proven** |
-| `Theorem_Local_SB` | Theorem 6.2 | **Proven** |
-| `Lemma_PP_Unique` | Lemma 6.1 | **Proven** |
-| `atoms_are_prime` | (not numbered) | **Proven** |
-| `Prop_CFI_implies_PPP` | Proposition 5.3 | **Proven** |
-| `Blockwise_CFI_2` | Lemma 5.1 | **Proven** |
-| `thm_main` | Theorem 9.1 | In progress |
-| `atoms_infinite_of_CPL` | Theorem 9.1(b) | In progress |
-| `lem_primewise` | Lemma 8.1 | Has sorry |
-| `Blockwise_CFI_k` | Lemma 5.2 | Has sorry |
+| Lean Name | Paper Ref | Description |
+|-----------|-----------|-------------|
+| `cor_factorial` | Corollary 8.4 | PP-D + CFI implies M is factorial |
+| `prop_val_additive` | Proposition 8.3 | Additivity of p-adic valuations |
+| `cor_squarefree` | Corollary 7.3 | Squarefree diagnostic |
+| `prop_coprime_mult` | Proposition 7.2 | Coprime multiplicativity of F_k |
+| `Theorem_Local_SB` | Theorem 6.2 | Local stars-and-bars formula |
+| `Lemma_PP_Unique` | Lemma 6.1 | Unique factorization in prime powers |
+| `Prop_CFI_implies_PPP` | Proposition 5.3 | CFI implies PP-P |
+| `atoms_are_prime` | — | Atoms are prime under CFI |
 
 ## Building
 
