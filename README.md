@@ -2,9 +2,40 @@
 
 A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labeled Factorization Counts" by Eduardo Zambrano.
 
-## Overview
+## Formalization Status
 
-This project proves Theorem 9.1 from the paper: under axioms PP-D (powers distinct), CFI (coprime parts factor independently), and CPL (coprime products exist at every level), a reduced atomic commutative monoid M is isomorphic to (ℕ, ×). The main result is `thm_main` in `MainTheorem.lean`.
+### Main Theorem (Theorem 9.1): COMPLETE
+
+The main theorem `thm_main` is **fully formalized with no sorries**:
+
+```lean
+theorem thm_main {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_ppd : PP_D M) (h_cfi : CFI M) (h_cpl : CPL M) :
+    Factorial M ∧ Set.Infinite (Atoms M)
+```
+
+Under axioms PP-D (powers distinct), CFI (coprime parts factor independently), and CPL (coprime products exist at every level), a reduced atomic commutative monoid M is factorial with infinitely many atoms, hence isomorphic to (ℕ, ×).
+
+### Explicit Counting Formula (Theorem 8.2): INCOMPLETE
+
+The master counting formula `thm_master` has one blocking sorry:
+
+```lean
+theorem thm_master {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_ppd : PP_D M) (h_cfi : CFI M)
+    (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
+    (m : M) (k : ℕ) (hk : k ≥ 1) :
+    ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
+      LabeledFactorizationCount k m = S.prod (fun p => Nat.choose (PValuation p m + k - 1) (k - 1))
+```
+
+**Remaining sorry:** `lem_primewise` (Lemma 8.1) in `MasterFormula_v2_aristotle.lean:269`
+
+This lemma establishes the primewise decomposition m = ∏ p^{v_p(m)}, which requires showing that the multiset product of atomic factorizations can be rewritten as a finset product indexed by distinct atoms. The proof requires multiset manipulation lemmas that are not yet complete.
+
+**Note:** The explicit counting formula is not needed for the main structural result (Theorem 9.1). The factorial structure is proven directly via unique factorization arguments using valuation counts.
 
 ## Logical Structure of the Proof
 
@@ -105,14 +136,27 @@ Basic.lean                        -- Definitions: Reduced, Atomic, CFI, PP-D, PP
 
 ## Proven Results
 
-| Lean Name | Paper Ref | Description |
-|-----------|-----------|-------------|
-| `thm_main` | Theorem 9.1 | PP-D + CFI + CPL implies M ≅ (ℕ, ×) |
-| `atoms_infinite_of_CPL` | — | CPL implies infinitely many atoms |
-| `cor_factorial` | Corollary 8.4 | PP-D + CFI implies M is factorial |
-| `prop_val_additive` | Proposition 8.3 | Additivity of p-adic valuations |
-| `Prop_CFI_implies_PPP` | Proposition 5.3 | CFI implies PP-P |
-| `atoms_are_prime` | — | Atoms are prime under CFI |
+| Lean Name | Paper Ref | Status | Description |
+|-----------|-----------|--------|-------------|
+| `thm_main` | Theorem 9.1 | ✅ | PP-D + CFI + CPL implies M ≅ (ℕ, ×) |
+| `atoms_infinite_of_CPL` | — | ✅ | CPL implies infinitely many atoms |
+| `cor_factorial` | Corollary 8.4 | ✅ | PP-D + CFI implies M is factorial |
+| `prop_val_additive` | Proposition 8.3 | ✅ | Additivity of p-adic valuations |
+| `Prop_CFI_implies_PPP` | Proposition 5.3 | ✅ | CFI implies PP-P |
+| `atoms_are_prime` | — | ✅ | Atoms are prime under CFI |
+| `thm_master` | Theorem 8.2 | ❌ | Master counting formula (blocked by `lem_primewise`) |
+| `lem_primewise` | Lemma 8.1 | ❌ | Primewise decomposition m = ∏ p^{v_p(m)} |
+
+## Remaining Sorries
+
+The following sorries exist but do **not** block the main theorem:
+
+| Declaration | File | Line | Description |
+|-------------|------|------|-------------|
+| `lem_primewise` | MasterFormula_v2_aristotle.lean | 269 | Primewise decomposition (blocks `thm_master`) |
+| `lem_primewise_impl` | MasterFormula_v2_aristotle.lean | 650 | Implementation of primewise decomposition |
+| `Support_Union_of_Coprime` | Utilities.lean | 143 | Unused helper lemma |
+| `Blockwise_CFI_k_general` | LocalPurity.lean | 533 | Generalized blockwise bijection (unused) |
 
 ## Building
 
