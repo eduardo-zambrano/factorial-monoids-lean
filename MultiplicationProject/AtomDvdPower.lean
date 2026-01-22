@@ -59,29 +59,6 @@ lemma factorization_2_atom_cases {M : Type*} [CommMonoid M] (h_reduced : Reduced
     · simp [h1_one] at hf; exact hf
     · exact h1_one
 
-/-!
-## Key lemma: distinct atoms are coprime
--/
-
-/-- In a reduced monoid, distinct atoms are coprime. -/
-lemma coprime_of_distinct_atoms' {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (h_neq : p ≠ q) :
-    AreCoprime p q := by
-  intro r hr hrp hrq
-  obtain ⟨s, hs⟩ := hrp
-  cases hp.isUnit_or_isUnit hs with
-  | inl hr_unit => exact absurd hr_unit hr.not_isUnit
-  | inr hs_unit =>
-    have hs1 : s = 1 := h_reduced s hs_unit
-    subst hs1; simp at hs
-    obtain ⟨t, ht⟩ := hrq
-    cases hq.isUnit_or_isUnit ht with
-    | inl hr_unit => exact absurd hr_unit hr.not_isUnit
-    | inr ht_unit =>
-      have ht1 : t = 1 := h_reduced t ht_unit
-      subst ht1; simp at ht
-      exact h_neq (hs.trans ht.symm)
-
 /-- If q is an atom and q | m, then either q and m are coprime or q | m. Helper for recursion. -/
 lemma atom_dvd_coprime_or_dvd {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
     {q m : M} (hq : q ∈ Atoms M) :
@@ -98,23 +75,6 @@ lemma atom_dvd_coprime_or_dvd {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
       subst hs1; simp only [mul_one] at hs
       subst hs
       exact h hrm
-
-/-!
-## Helper: Powers of atoms in a reduced monoid
--/
-
-/-- Distinct atoms do not divide each other. -/
-lemma atom_not_dvd_distinct_atom {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (hpq : p ≠ q) :
-    ¬(p ∣ q) := by
-  intro ⟨u, hu⟩
-  -- hu : q = p * u
-  cases hq.isUnit_or_isUnit hu with
-  | inl hp_unit => exact hp.not_isUnit hp_unit
-  | inr hu_unit =>
-    have hu1 : u = 1 := h_reduced u hu_unit
-    simp [hu1] at hu
-    exact hpq hu.symm
 
 /-- q^j and n are coprime if q ∤ n (for atom q). -/
 lemma power_coprime_of_not_dvd {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
