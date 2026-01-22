@@ -79,7 +79,7 @@ noncomputable section
 -/
 
 /-- If p and q are atoms, and p^k divides q, then k ≤ 1. -/
-lemma lemma_pow_dvd_atom {M : Type*} [CommMonoid M] (h_red : Reduced M)
+lemma lemma_pow_dvd_atom {M : Type*} [CommMonoid M] (_h_red : Reduced M)
     (p q : M) (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (k : ℕ) (h_dvd : p ^ k ∣ q) :
     k ≤ 1 := by
   unfold Atoms at hq
@@ -94,7 +94,7 @@ lemma lemma_pow_dvd_atom {M : Type*} [CommMonoid M] (h_red : Reduced M)
     · exact hp.1 right_1
 
 /-- If an atom q divides a power of an atom p, then q = p. -/
-lemma lemma_atom_dvd_pow {M : Type*} [CommMonoid M] (h_red : Reduced M) (h_ppp : PP_P M)
+lemma lemma_atom_dvd_pow {M : Type*} [CommMonoid M] (_h_red : Reduced M) (h_ppp : PP_P M)
     (p q : M) (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (k : ℕ) (h_dvd : q ∣ p ^ k) :
     q = p := by
   obtain ⟨x, hx⟩ : ∃ x, p^k = q * x := h_dvd
@@ -182,7 +182,7 @@ lemma sum_split_by_CFI {M : Type*} [CommMonoid M]
   rw [← h_bij, Finset.sum_image]
   · simp +decide [Finset.sum_product]
   · intro p hp q hq h_eq
-    simp_all +decide [Function.Injective, Set.mem_setOf_eq]
+    simp_all +decide [Function.Injective]
     specialize h₁ _ hp.1 _ hp.2 _ hq.1 _ hq.2
     aesop
     · exact h₁ (Subtype.ext h_eq) |>.1
@@ -225,7 +225,7 @@ theorem cor_squarefree {M : Type*} [CommMonoid M]
         have hx0 : IsUnit (x 0) := by
           exact isUnit_of_mul_eq_one _ _ hx;
         exact?;
-      ext i; induction i using Fin.inductionOn <;> simp_all +decide [ Fin.prod_univ_succ ] ;
+      ext i; induction i using Fin.inductionOn <;> simp_all +decide;
       rename_i i hi ih;
       specialize i ( fun j => x j.succ ) hx ; replace i := congr_fun i hi ; aesop;
   · -- Since p is coprime with the product of L, we can apply the multiplicativity result.
@@ -239,9 +239,9 @@ theorem cor_squarefree {M : Type*} [CommMonoid M]
         intro L hL; induction' L with q L ih <;> simp_all +decide [ AreCoprime ] ;
         · exact?;
         · intro p_1 hp_1 hp_1p hp_1qL;
-          cases h_prime p_1 hp_1 q ( List.prod L ) hp_1qL <;> simp_all +decide [ dvd_mul_of_dvd_left, dvd_mul_of_dvd_right ];
+          cases h_prime p_1 hp_1 q ( List.prod L ) hp_1qL <;> simp_all +decide [ dvd_mul_of_dvd_right ];
           have h_div : ∀ {L : List M}, (∀ q ∈ L, ¬p_1 ∣ q) → ¬p_1 ∣ List.prod L := by
-            intro L hL; induction' L with q L ih <;> simp_all +decide [ dvd_mul_of_dvd_left, dvd_mul_of_dvd_right ] ;
+            intro L hL; induction' L with q L ih <;> simp_all +decide;
             · exact?;
             · exact fun h => ih ( by cases h_prime p_1 hp_1 q ( List.prod L ) h <;> tauto );
           exact h_div ( fun q hq => hL.2 q hq p_1 hp_1 hp_1p ) ‹_›;
@@ -306,7 +306,7 @@ lemma count_finset_prod_of_coprime {M : Type*} [CommMonoid M]
       · rw [ Finset.prod_empty ];
         unfold LabeledFactorizationCount;
         unfold LabeledFactorizations;
-        simp +decide [ Set.ncard_eq_toFinset_card' ];
+        simp +decide;
         use fun _ => 1;
         ext f;
         exact ⟨ fun hf => funext fun i => h_reduced _ <| isUnit_of_dvd_one <| hf.symm ▸ Finset.dvd_prod_of_mem _ ( Finset.mem_univ _ ), fun hf => hf.symm ▸ by simp +decide ⟩;
@@ -332,7 +332,7 @@ If p is an atom coprime to u, then any power of p is coprime to u.
 lemma AreCoprime_pow_left {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_ppp : PP_P M)
     (p : M) (hp : p ∈ Atoms M) (k : ℕ) (u : M) (h : AreCoprime p u) :
     AreCoprime (p ^ k) u := by
-      rcases k with ( _ | k ) <;> simp_all +decide [ pow_succ', mul_assoc, mul_comm, mul_left_comm, AreCoprime ];
+      rcases k with ( _ | k ) <;> simp_all +decide [ pow_succ', AreCoprime ];
       · intro q hq hq1 hu; have := hq1; exact (by
         exact hq.not_isUnit ( isUnit_of_dvd_one hq1 ));
       · intro q hq hq';
@@ -347,12 +347,12 @@ In a reduced monoid, associated elements are equal.
 lemma associated_eq_of_reduced {M : Type*} [Monoid M] (h_reduced : Reduced M)
     (a b : M) (h : Associated a b) : a = b := by
       obtain ⟨ u, hu ⟩ := h;
-      simp_all +decide [ mul_assoc, Reduced ]
+      simp_all +decide [ Reduced ]
 
 /-
 p^(k+1) cannot divide p^k in a reduced monoid with PP-D and PP-P.
 -/
-lemma pow_succ_dvd_pow_impossible {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_ppd : PP_D M) (h_ppp : PP_P M)
+lemma pow_succ_dvd_pow_impossible {M : Type*} [CommMonoid M] (_h_reduced : Reduced M) (h_ppd : PP_D M) (h_ppp : PP_P M)
     (p : M) (hp : p ∈ Atoms M) (k : ℕ) : ¬ (p ^ (k + 1) ∣ p ^ k) := by
       -- Assume that $p^{k+1} \mid p^k$. Then there exists some $y$ such that $p^k = p^{k+1} \cdot y$.
       by_contra h_div
@@ -386,12 +386,12 @@ lemma atom_dvd_cancel {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_atom
         have := h_cfi ( p ^ k ) u ?_;
         · obtain ⟨ ⟨ a, b ⟩, h ⟩ := this.2 ⟨ fun i => if i = 0 then p ^ ( k + 1 ) else h.choose, by
             convert h.choose_spec using 1;
-            simp +decide [ Fin.forall_fin_two, LabeledFactorizations ];
+            simp +decide [ LabeledFactorizations ];
             rw [ eq_comm ] ⟩
           generalize_proofs at *;
           use a.val 0, a.val 1, b.val 0, b.val 1;
-          have := a.2; have := b.2; simp_all +decide [ Fin.forall_fin_two, LabeledFactorizations ] ;
-          replace h := congr_arg Subtype.val h; simp_all +decide [ Fin.prod_univ_two, labeledFactorizationMul ] ;
+          have := a.2; have := b.2; simp_all +decide [ LabeledFactorizations ] ;
+          replace h := congr_arg Subtype.val h; simp_all +decide [ labeledFactorizationMul ] ;
           exact ⟨ by simpa using congr_fun h 0, by simpa using congr_fun h 1 ⟩;
         · exact?;
       -- By `h_ppp`, `c` is a power of `p`.
@@ -413,7 +413,7 @@ lemma atom_dvd_cancel {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_atom
         have hc_unit : c ∣ u := by
           exact hcd ▸ dvd_mul_right _ _;
         obtain ⟨ d, hd ⟩ := hc_unit;
-        have := hc_unit c; simp_all +decide [ mul_assoc, mul_comm, mul_left_comm ] ;
+        have := hc_unit c; simp_all +decide [ mul_comm, mul_left_comm ] ;
         rcases l with ( _ | l ) <;> simp_all +decide [ pow_succ' ];
         exact False.elim ( h_contra ( dvd_mul_of_dvd_right ( dvd_mul_right _ _ ) _ ) );
       -- Since `c` is a unit, we have `c = 1`.
@@ -433,7 +433,7 @@ lemma not_dvd_filter_prod {M : Type*} [CommMonoid M] [DecidableEq M] (h_reduced 
       by_contra h;
       -- By induction on the length of the list L.filter (≠ p), we can show that p does not divide the product of its elements.
       have h_ind : ∀ {L : List M}, (∀ q ∈ L, q ∈ Atoms M ∧ q ≠ p) → ¬p ∣ L.prod := by
-        intro L hL; induction' L with q L ih <;> simp_all +decide [ dvd_mul_of_dvd_left, dvd_mul_of_dvd_right ] ;
+        intro L hL; induction' L with q L ih <;> simp_all +decide;
         · exact fun h => hp.1 ( isUnit_of_dvd_one h );
         · have := atoms_are_prime h_reduced h_atomic h_cfi p hp q (L.prod);
           exact fun h => absurd ( this h ) ( by rintro ( h | h ) <;> [ exact hL.1.2 ( by have := coprime_of_distinct_atoms h_reduced hp hL.1.1; aesop ) ; exact ih h ] );
@@ -475,7 +475,7 @@ lemma lemma_pow_dvd_multiset_prod {M : Type*} [CommMonoid M] [DecidableEq M]
           intro t ht
           induction' t using Multiset.induction with a t ih;
           · simp +decide [ pow_zero ];
-          · by_cases ha : p = a <;> simp_all +decide [ pow_add, mul_assoc, dvd_mul_of_dvd_right ];
+          · by_cases ha : p = a <;> simp_all +decide [ pow_add, dvd_mul_of_dvd_right ];
             rw [ mul_comm ] ; exact mul_dvd_mul_left _ ih
         have h_count_eq : ∀ {t : Multiset M}, (∀ a ∈ t, a ∈ Atoms M) → (p ^ k ∣ Multiset.prod t) → k ≤ Multiset.count p t := by
           intro t ht h_dvd

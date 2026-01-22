@@ -240,13 +240,13 @@ set_option maxHeartbeats 0
 -/
 
 /-- In a reduced monoid, 1 is coprime to everything. -/
-lemma one_coprime_left {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (x : M) :
+lemma one_coprime_left {M : Type*} [CommMonoid M] (_h_reduced : Reduced M) (x : M) :
     AreCoprime 1 x := by
   intro p hp h1_dvd _
   exact absurd (isUnit_of_dvd_one h1_dvd) hp.not_isUnit
 
 /-- In a reduced monoid, everything is coprime to 1. -/
-lemma one_coprime_right {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (x : M) :
+lemma one_coprime_right {M : Type*} [CommMonoid M] (_h_reduced : Reduced M) (x : M) :
     AreCoprime x 1 := by
   intro p hp _ h1_dvd
   exact absurd (isUnit_of_dvd_one h1_dvd) hp.not_isUnit
@@ -319,7 +319,7 @@ lemma Support_mul_subset_union_support_of_CFI {M : Type*} [CommMonoid M] (h_redu
           generalize_proofs at *;
           exact ⟨ f.1, f.2, by simpa using congr_arg ( fun f : LabeledFactorizations 2 ( x * y ) => f.val 0 ) hf ⟩;
         have hfg_div : f.val 0 ∣ x ∧ g.val 0 ∣ y := by
-          exact ⟨ dvd_trans ( by simp +decide [ Fin.prod_univ_succ ] ) ( f.2.symm ▸ Finset.dvd_prod_of_mem _ ( Finset.mem_univ 0 ) ), dvd_trans ( by simp +decide [ Fin.prod_univ_succ ] ) ( g.2.symm ▸ Finset.dvd_prod_of_mem _ ( Finset.mem_univ 0 ) ) ⟩;
+          exact ⟨ dvd_trans ( by simp +decide ) ( f.2.symm ▸ Finset.dvd_prod_of_mem _ ( Finset.mem_univ 0 ) ), dvd_trans ( by simp +decide ) ( g.2.symm ▸ Finset.dvd_prod_of_mem _ ( Finset.mem_univ 0 ) ) ⟩;
         have hfg_unit : IsUnit (f.val 0) ∨ IsUnit (g.val 0) := by
           exact?;
         cases' hfg_unit with hfg_unit hfg_unit;
@@ -420,7 +420,7 @@ def blockwiseProd {M : Type*} [CommMonoid M] {n k : ℕ} {x y : Fin n → M}
 /-
 If p is an atom and does not divide x, then p and x are coprime.
 -/
-lemma not_dvd_implies_coprime {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (p : M) (hp : p ∈ Atoms M) (x : M) (h : ¬ p ∣ x) : AreCoprime p x := by
+lemma not_dvd_implies_coprime {M : Type*} [CommMonoid M] (_h_reduced : Reduced M) (p : M) (hp : p ∈ Atoms M) (x : M) (h : ¬ p ∣ x) : AreCoprime p x := by
   intro q hq hq';
   -- Since $q$ divides $p$ and $p$ is an atom, $q$ must be an associate of $p$.
   obtain ⟨u, hu⟩ : ∃ u : M, q = p * u ∧ IsUnit u := by
@@ -429,7 +429,7 @@ lemma not_dvd_implies_coprime {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
     specialize hp₂ hq';
     cases' hp₂ with hp₂ hp₂ <;> simp_all +decide [ IsUnit.mul_iff ];
     · cases hq ; aesop;
-    · exact ⟨ hp₂.unit.inv, by simp +decide [ mul_assoc, hp₂.unit.inv_mul ], by simp +decide [ hp₂.unit.inv_mul ] ⟩;
+    · exact ⟨ hp₂.unit.inv, by simp +decide [ mul_assoc ], by simp +decide ⟩;
   aesop
 
 /-
@@ -497,7 +497,7 @@ Once PP-P is established, these follow easily.
     So q = p^j for some j. Since q is irreducible, j = 1, hence q = p.
 
     TODO: Complete the case j ≥ 2 in a future Aristotle session. -/
-lemma atom_dvd_power_eq {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
+lemma atom_dvd_power_eq {M : Type*} [CommMonoid M] (_h_reduced : Reduced M)
     (h_ppp : PP_P M) {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M)
     {k : ℕ} (h_dvd : q ∣ p ^ k) :
     q = p := by
@@ -529,7 +529,7 @@ lemma Support_Power_Subset {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
 
 /-- If Support(x) ⊆ {p}, then x ∈ ⟨p⟩. -/
 lemma Support_Singleton_Implies_Power {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    (h_atomic : Atomic M) (h_ppp : PP_P M) (p : M) (hp : p ∈ Atoms M) (x : M)
+    (h_atomic : Atomic M) (_h_ppp : PP_P M) (p : M) (_hp : p ∈ Atoms M) (x : M)
     (hx : Support x ⊆ {p}) :
     x ∈ Submonoid.powers p := by
   by_cases hxu : IsUnit x

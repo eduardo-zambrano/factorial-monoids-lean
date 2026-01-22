@@ -149,9 +149,9 @@ lemma atom_dvd_power_mul_coprime {M : Type*} [CommMonoid M] (h_reduced : Reduced
 If q is an atom not in a multiset of atoms t, and the inductive hypothesis holds for t, then q^k is coprime to t.prod.
 -/
 lemma coprime_pow_prod_of_forall_neq {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_cfi : CFI M)
+    (h_reduced : Reduced M) (_h_cfi : CFI M)
     (q : M) (hq : q ∈ Atoms M)
-    (t : Multiset M) (ht : ∀ x ∈ t, x ∈ Atoms M)
+    (t : Multiset M) (_ht : ∀ x ∈ t, x ∈ Atoms M)
     (h_neq : ∀ x ∈ t, x ≠ q)
     (h_ind : ∀ p, p ∈ Atoms M → p ∣ t.prod → p ∈ t)
     (k : ℕ) :
@@ -179,7 +179,7 @@ lemma atom_dvd_multiset_prod {M : Type*} [CommMonoid M]
           by_cases hs_empty : s = 0;
           · simp_all +decide [ Atoms ];
             exact hp.not_dvd_one h_dvd;
-          · obtain ⟨ q, hq ⟩ := Multiset.exists_mem_of_ne_zero hs_empty; use q; simp_all +decide [ Multiset.filter_eq', Multiset.count_replicate ] ;
+          · obtain ⟨ q, hq ⟩ := Multiset.exists_mem_of_ne_zero hs_empty; use q; simp_all +decide ;
             ext x; by_cases hx : x = q <;> simp +decide [ hx, Multiset.count_replicate ] ;
             aesop;
         -- We have `p ∣ q^k * t.prod`.
@@ -295,7 +295,7 @@ lemma atoms_are_prime {M : Type*} [CommMonoid M]
         have h_coprime_div : p ∣ (s_a + s_b).prod → p ∈ s_a + s_b := by
           apply atom_dvd_multiset_prod h_reduced h_cfi (s_a + s_b) (by
           grind) p hp;
-        cases Multiset.mem_add.mp ( h_coprime_div ( by simpa only [ hs_a.1, hs_b.1, Multiset.prod_add ] using h_div ) ) <;> simp_all +decide [ dvd_mul_of_dvd_left, dvd_mul_of_dvd_right ];
+        cases Multiset.mem_add.mp ( h_coprime_div ( by simpa only [ hs_a.1, hs_b.1, Multiset.prod_add ] using h_div ) ) <;> simp_all +decide;
         · exact Or.inl ( Multiset.dvd_prod ‹_› );
         · exact Or.inr ( Multiset.dvd_prod ‹_› );
       exact absurd ( h_coprime_ab hp ( hm.symm ▸ dvd_mul_right _ _ ) ) ( by tauto )

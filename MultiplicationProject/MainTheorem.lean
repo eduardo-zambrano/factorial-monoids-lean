@@ -110,7 +110,7 @@ lemma nodup_of_pairwise_coprime {M : Type*} [CommMonoid M]
   -- By definition of coprimality, if L[i] is coprime to itself, then any atom dividing L[i] must divide 1, which is impossible since atoms are non-units.
   obtain ⟨p, hp⟩ : ∃ p ∈ Atoms M, p ∣ L.get i := by
     exact exists_atom_dvd h_atomic _ ( hL_nonunit _ ( by simp ) );
-  have := h_coprime_self p; simp_all +decide [ dvd_mul_of_dvd_left, dvd_mul_of_dvd_right ] ;
+  have := h_coprime_self p; simp_all +decide;
 
 /-- CPL implies the atom set is infinite.
 

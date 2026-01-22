@@ -168,17 +168,17 @@ lemma count_atom {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
       intro j hj; specialize h_factor j; aesop
       have := h_prod_one ▸ Finset.dvd_prod_of_mem _ (Finset.mem_sdiff.mpr ⟨Finset.mem_univ j, by aesop⟩); aesop
       exact h_reduced _ (isUnit_of_dvd_one this)
-    exact ⟨i, hi, fun j hj => h_all_one j (by simpa [hj])⟩
+    exact ⟨i, hi, fun j hj => h_all_one j (by simp [hj])⟩
   -- Count: there are exactly k such factorizations (one for each choice of i)
   have h_count : (LabeledFactorizations k p).ncard = Finset.card (Finset.image (fun i : Fin k => fun j : Fin k => if j = i then p else 1) (Finset.univ : Finset (Fin k))) := by
-    rw [← Set.ncard_coe_Finset]; congr; ext; aesop
+    rw [← Set.ncard_coe_finset]; congr; ext; aesop
     · obtain ⟨i, hi, hi'⟩ := h_factorizations x a; use i; ext j; by_cases hj : j = i <;> aesop
     · unfold LabeledFactorizations; aesop
   rw [Finset.card_image_of_injective] at h_count
   · aesop
   · intro i j hij; replace hij := congr_fun hij j; aesop
     cases eq_or_ne j i <;> aesop
-    exact absurd hp.1 (by simp (config := { decide := Bool.true }) [Irreducible])
+    exact absurd hp.1 (by simp (config := { decide := Bool.true }))
 
 /-!
 ## Main Result: Proposition 7.2
@@ -219,13 +219,13 @@ theorem prop_coprime_mult {M : Type*} [CommMonoid M]
       have h_coprime_f : AreCoprime (f.1.1 1) (f.2.1 1) := by
         apply_rules [AreCoprime_of_dvd]
         · have := f.1.2
-          exact dvd_trans (by simp +decide [Fin.prod_univ_two]) (this.symm ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ 1))
-        · exact dvd_trans (by simp +decide [Fin.prod_univ_two]) (f.2.2.symm ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ 1))
+          exact dvd_trans (by simp +decide) (this.symm ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ 1))
+        · exact dvd_trans (by simp +decide) (f.2.2.symm ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ 1))
       exact ih _ (Nat.lt_succ_self _) (Nat.succ_pos _) h_coprime_f
     -- Reindex the sum using the bijection E
     have h_sum_bij : ∑ f ∈ (h_finite 2 (x * y)).toFinset, LabeledFactorizationCount (k + 1) (f 1) = ∑ f ∈ (h_finite 2 x).toFinset ×ˢ (h_finite 2 y).toFinset, LabeledFactorizationCount (k + 1) (f.1 1) * LabeledFactorizationCount (k + 1) (f.2 1) := by
       norm_num +zetaDelta at *
-      refine' Finset.sum_bij (fun f hf => (E.symm ⟨f, by aesop⟩ |>.1.val, E.symm ⟨f, by aesop⟩ |>.2.val)) _ _ _ _ <;> simp +decide [hE]
+      refine' Finset.sum_bij (fun f hf => (E.symm ⟨f, by aesop⟩ |>.1.val, E.symm ⟨f, by aesop⟩ |>.2.val)) _ _ _ _ <;> simp +decide
       · grind
       · grind
       · intro a ha
@@ -234,7 +234,7 @@ theorem prop_coprime_mult {M : Type*} [CommMonoid M]
         all_goals norm_num +zetaDelta at *
         have := E.apply_symm_apply ⟨a, ha⟩; aesop
         exact congr_fun this.symm 1
-    simp_all +decide [Finset.sum_product, Finset.mul_sum _ _ _, Finset.sum_mul]
+    simp_all +decide [Finset.sum_product]
     rw [count_split, count_split]
     any_goals intro f; exact h_finite _ _
     any_goals exact h_finite _ _
