@@ -116,18 +116,33 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 - Shows that if x*y divides p^e, any atom dividing x or y must equal p
 - Uses divisibility chain and atomic factorizations
 
-## File Dependency Chain
+## File Structure
+
+| File | Paper Section | Description |
+|------|---------------|-------------|
+| `Basic.lean` | §2-3 | Core definitions and axioms |
+| `Utilities.lean` | — | Transfer lemmas for monoid isomorphisms |
+| `AtomDvdPower.lean` | §5 | Key lemma: atom dividing p^k equals p |
+| `LocalPurity.lean` | §5 | CFI implies PP-P (Proposition 5.3) |
+| `LocalCharacterization.lean` | §6 | Local stars-and-bars (Theorem 6.2) |
+| `GlobalMultiplicativity.lean` | §7 | Coprime multiplicativity (Proposition 7.2) |
+| `AtomsArePrime_v2_aristotle.lean` | §8 | Atoms are prime under CFI |
+| `MasterFormula_v2_aristotle.lean` | §8 | Master formula and factorial structure |
+| `MainTheorem.lean` | §9 | Main theorem (Theorem 9.1) |
+
+### Dependency Chain
 
 ```
-Basic.lean                        -- Definitions: Reduced, Atomic, CFI, PP-D, PP-P, CPL, F_k
-  └─ Utilities.lean               -- Transfer lemmas, Disjoint_Support_implies_Coprime
-       └─ AtomDvdPower.lean       -- atom_dvd_power_eq_of_CFI
-            └─ LocalPurity.lean   -- Prop_CFI_implies_PPP (Prop 5.3)
-                 └─ LocalCharacterization.lean
-                      └─ GlobalMultiplicativity.lean
-                           └─ AtomsArePrime_v2_aristotle.lean  -- atoms_are_prime
-                                └─ MasterFormula_v2_aristotle.lean  -- cor_factorial (Cor 8.4)
-                                     └─ MainTheorem.lean  -- thm_main (Thm 9.1)
+Basic.lean
+  └─ Utilities.lean
+       └─ AtomDvdPower.lean
+            └─ LocalPurity.lean (§5: Prop_CFI_implies_PPP)
+                 ├─ LocalCharacterization.lean (§6)
+                 │    └─ GlobalMultiplicativity.lean (§7)
+                 │         └─ MasterFormula_v2_aristotle.lean (§8)
+                 │              └─ MainTheorem.lean (§9: thm_main)
+                 └─ AtomsArePrime_v2_aristotle.lean
+                      └─ MasterFormula_v2_aristotle.lean
 ```
 
 ## Proven Results
@@ -149,8 +164,10 @@ The following sorries exist but do **not** block the main theorems:
 
 | Declaration | File | Line | Description |
 |-------------|------|------|-------------|
-| `Support_Union_of_Coprime` | Utilities.lean | 143 | Unused helper lemma |
-| `Blockwise_CFI_k_general` | LocalPurity.lean | 533 | Generalized blockwise bijection (unused) |
+| `power_coprime_of_not_dvd` | AtomDvdPower.lean | 120 | Auxiliary lemma for extraction argument |
+| `atom_dvd_power_eq_of_CFI` | AtomDvdPower.lean | 257 | Helper for non-coprime extraction case |
+
+These sorries are in helper lemmas within `AtomDvdPower.lean`. The main proof chain uses `atom_dvd_power_eq` (in LocalPurity.lean) which is complete.
 
 ## Building
 

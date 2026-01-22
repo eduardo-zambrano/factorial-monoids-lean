@@ -1,69 +1,18 @@
 /-
-This file was edited by Aristotle.
-
-Lean version: leanprover/lean4:v4.24.0
-Mathlib version: f897ebcf72cd16f89ab4577d0c826cd14afaafc7
-This project request had uuid: 5280b5d3-61d0-4885-b753-0d89b27eacb6
-
-The following was proved by Aristotle:
-
-- theorem Prop_CFI_implies_PPP {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    (h_atomic : Atomic M) (h_cfi : CFI M) :
-    PP_P M
--/
-
-/-
-This file was edited by Aristotle.
-
-Lean version: leanprover/lean4:v4.24.0
-Mathlib version: f897ebcf72cd16f89ab4577d0c826cd14afaafc7
-This project request had uuid: 6e083587-549a-48b7-a0a4-9f1a628ab2cf
-
-The following was proved by Aristotle:
-
-- lemma Blockwise_CFI_2 {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_cfi : CFI M)
-    {n : ℕ} (x y : Fin n → M)
-    (h_disjoint : BlockwiseDisjoint x y)
-    (h_coprime : ∀ i, AreCoprime (x i) (y i)) :
-    Function.Bijective (fun (fs : (i : Fin n) →
-        LabeledFactorizations 2 (x i) × LabeledFactorizations 2 (y i)) =>
-      (⟨fun j => ∏ i, ((fs i).1.1 j * (fs i).2.1 j),
-        sorry⟩ : LabeledFactorizations 2 (∏ i, x i * y i)))
-
-- lemma atom_dvd_power_eq {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    (h_ppp : PP_P M) {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M)
-    {k : ℕ} (h_dvd : q ∣ p ^ k) :
-    q = p
-
-At Harmonic, we use a modified version of the `generalize_proofs` tactic.
-For compatibility, we include this tactic at the start of the file.
-If you add the comment "-- Harmonic `generalize_proofs` tactic" to your file, we will not do this.
--/
-
-/-
 Copyright (c) 2024 Eduardo Zambrano. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eduardo Zambrano
 
 # Section 5: Local Purity (CFI implies PP-P)
 
-This file proves that CFI implies PP-P using the paper's blockwise independence argument.
+This file proves that CFI implies PP-P (Proposition 5.3 from the paper).
 
-## Proof Structure (from the paper)
+## Main Results
 
-The key insight is that we prove PP-P DIRECTLY from blockwise CFI, not via Support_Power_Subset.
+- `Prop_CFI_implies_PPP`: CFI implies PP-P (prime powers are factorially closed)
+- `atom_dvd_power_eq`: Under PP-P, any atom dividing p^k equals p
 
-1. **Lemma 5.1** (Blockwise_CFI_2): For blockwise-disjoint coprime pairs, the coordinatewise
-   map Θ: ∏_j (F_2(x^j) × F_2(y^j)) → F_2(X * Y) is a bijection.
-
-2. **Lemma 5.2** (Blockwise_CFI_k): Extends to k factors on one designated block.
-
-3. **Proposition 5.3** (Prop_CFI_implies_PPP): Given x * y ∈ ⟨p⟩:
-   - Write x = p^a * x_pf, y = p^b * y_pf (p-free parts)
-   - Build blockwise-disjoint family with the p-block and atom blocks from x_pf, y_pf
-   - Apply Blockwise_CFI_k; the bijection structure forces x_pf = y_pf = 1
-
-After PP-P is proven, Support_Power_Subset becomes trivial.
+Some proofs were completed with assistance from Aristotle (Harmonic's AI theorem prover).
 -/
 
 import MultiplicationProject.Utilities
@@ -430,107 +379,7 @@ lemma Blockwise_Coprime_Head_Tail {M : Type*} [CommMonoid M] (h_reduced : Reduce
       refine' h_support_disjoint.mono_right _;
       exact Blockwise_Support_Subset h_reduced h_cfi _ _ ( fun i j hij => h_disjoint _ _ <| by simpa [ Fin.ext_iff ] using hij ) fun i => h_coprime _
 
-/-
-Helper lemma to show that the product of blockwise factorizations matches the product of the elements.
--/
-lemma Blockwise_Prod_Eq {M : Type*} [CommMonoid M] {n : ℕ} (x y : Fin n → M)
-  (fs : (i : Fin n) → LabeledFactorizations 2 (x i) × LabeledFactorizations 2 (y i)) :
-  (∏ j : Fin 2, ∏ i : Fin n, (fs i).1.1 j * (fs i).2.1 j) = ∏ i : Fin n, x i * y i := by
-    simp +decide [ Fin.prod_univ_succ ];
-    rw [ ← Finset.prod_mul_distrib ];
-    congr 1 with i;
-    convert congr_arg₂ ( · * · ) ( fs i |>.1.2 ) ( fs i |>.2.2 ) using 1;
-    rw [ show ( Finset.univ : Finset ( Fin 2 ) ) = { 0, 1 } by decide, Finset.prod_pair, Finset.prod_pair ] <;> simp +decide [ mul_assoc, mul_comm, mul_left_comm ]
-
-/-
-Inductive step for Blockwise CFI: if the property holds for size n, it holds for size n+1.
--/
-lemma Blockwise_CFI_Inductive_Step {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_cfi : CFI M)
-    {n : ℕ} (x y : Fin (n + 1) → M)
-    (h_disjoint : BlockwiseDisjoint x y)
-    (h_coprime : ∀ i, AreCoprime (x i) (y i))
-    (ih : Function.Bijective (fun (fs : (i : Fin n) →
-        LabeledFactorizations 2 (x (Fin.succ i)) × LabeledFactorizations 2 (y (Fin.succ i))) =>
-      (⟨fun j => ∏ i, ((fs i).1.1 j * (fs i).2.1 j),
-        Blockwise_Prod_Eq (x ∘ Fin.succ) (y ∘ Fin.succ) fs⟩ : LabeledFactorizations 2 (∏ i, x (Fin.succ i) * y (Fin.succ i))))) :
-    Function.Bijective (fun (fs : (i : Fin (n + 1)) →
-        LabeledFactorizations 2 (x i) × LabeledFactorizations 2 (y i)) =>
-      (⟨fun j => ∏ i, ((fs i).1.1 j * (fs i).2.1 j),
-        Blockwise_Prod_Eq x y fs⟩ : LabeledFactorizations 2 (∏ i, x i * y i))) := by
-          have h_head_bij : Function.Bijective (fun (fs : (LabeledFactorizations 2 (x 0)) × (LabeledFactorizations 2 (y 0))) =>
-              ⟨fun (j : Fin 2) => (fs.1.val j) * (fs.2.val j), by
-                exact labeledFactorizationMul fs.1 fs.2 |>.2⟩ : (LabeledFactorizations 2 (x 0)) × (LabeledFactorizations 2 (y 0)) → (LabeledFactorizations 2 (x 0 * y 0))) := by
-                exact h_cfi _ _ ( h_coprime 0 );
-          have h_combine_bij : Function.Bijective (fun (fs : (LabeledFactorizations 2 (x 0 * y 0)) × (LabeledFactorizations 2 (∏ i : Fin n, x (Fin.succ i) * y (Fin.succ i)))) =>
-              ⟨fun (j : Fin 2) => (fs.1.val j) * (fs.2.val j), by
-                simp +decide [ Fin.prod_univ_succ, LabeledFactorizations ];
-                convert congr_arg₂ ( · * · ) ( fs.1.2 ) ( fs.2.2 ) using 1;
-                simp +decide [ Fin.univ_succ, mul_assoc, mul_comm, mul_left_comm ]⟩ : (LabeledFactorizations 2 (x 0 * y 0)) × (LabeledFactorizations 2 (∏ i : Fin n, x (Fin.succ i) * y (Fin.succ i))) → (LabeledFactorizations 2 (∏ i : Fin (n + 1), x i * y i))) := by
-                have := h_cfi ( x 0 * y 0 ) ( ∏ i : Fin n, x ( Fin.succ i ) * y ( Fin.succ i ) ) ?_;
-                · convert this using 1;
-                  · simp +decide [ Fin.prod_univ_succ ];
-                  · congr! 1;
-                    congr! 1;
-                    · simp +decide [ Fin.prod_univ_succ ];
-                    · bound;
-                · exact?
-          generalize_proofs at *;
-          have h_split_bij : Function.Bijective (fun (fs : (i : Fin (n + 1)) → (LabeledFactorizations 2 (x i)) × (LabeledFactorizations 2 (y i))) =>
-              ((fs 0), (fun (i : Fin n) => fs (Fin.succ i))) : ((i : Fin (n + 1)) → (LabeledFactorizations 2 (x i)) × (LabeledFactorizations 2 (y i))) → ((LabeledFactorizations 2 (x 0)) × (LabeledFactorizations 2 (y 0))) × ((i : Fin n) → (LabeledFactorizations 2 (x (Fin.succ i))) × (LabeledFactorizations 2 (y (Fin.succ i)))) ) := by
-                constructor;
-                · intro fs₁ fs₂ h_eq
-                  simp at h_eq;
-                  exact funext fun i => Fin.cases h_eq.1 ( fun i => congr_fun h_eq.2 i ) i;
-                · intro ⟨ fs₀, fs₁ ⟩;
-                  exact ⟨ Fin.cons fs₀ fs₁, rfl ⟩;
-          convert h_combine_bij.comp ( h_head_bij.prodMap ih ) |> Function.Bijective.comp <| h_split_bij using 1;
-          ext; simp +decide [ Fin.prod_univ_succ ] ;
-
 end AristotleLemmas
-
-lemma Blockwise_CFI_2 {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_cfi : CFI M)
-    {n : ℕ} (x y : Fin n → M)
-    (h_disjoint : BlockwiseDisjoint x y)
-    (h_coprime : ∀ i, AreCoprime (x i) (y i)) :
-    Function.Bijective (fun (fs : (i : Fin n) →
-        LabeledFactorizations 2 (x i) × LabeledFactorizations 2 (y i)) =>
-      (⟨fun j => ∏ i, ((fs i).1.1 j * (fs i).2.1 j),
-        by
-          convert Blockwise_Prod_Eq x y fs using 1⟩ : LabeledFactorizations 2 (∏ i, x i * y i))) := by
-  all_goals generalize_proofs at *;
-  induction' n with n ih;
-  · refine' ⟨ _, _ ⟩;
-    · intro a b h;
-      exact Subsingleton.elim _ _;
-    · intro ⟨ f, hf ⟩;
-      simp_all +decide [ LabeledFactorizations ];
-      simp_all +decide [ LabeledFactorizations ];
-      ext i; fin_cases i <;> simp_all +decide [ h_reduced ] ;
-      · have := h_reduced ( f 0 );
-        exact Eq.symm ( this ( isUnit_of_mul_eq_one _ _ hf ) );
-      · have := h_reduced ( f 1 );
-        rw [ this ( isUnit_of_dvd_one ( dvd_of_mul_left_eq _ hf ) ) ];
-  · convert Blockwise_CFI_Inductive_Step h_reduced h_cfi x y h_disjoint h_coprime _;
-    convert ih ( x ∘ Fin.succ ) ( y ∘ Fin.succ ) _ _ _;
-    · exact fun i j hij => h_disjoint _ _ ( by simpa [ Fin.ext_iff ] using hij );
-    · exact fun i => h_coprime _
-
-/- Aristotle failed to find a proof. -/
-/- Aristotle failed to find a proof. -/
-/-- **Lemma 5.2**: Blockwise CFI for k factors on one designated block.
-
-    Given a blockwise-disjoint family with one designated block ℓ, we get a bijection
-    that uses 2-factorizations for blocks j ≠ ℓ and k-factorizations for block ℓ. -/
-lemma Blockwise_CFI_k {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_cfi : CFI M)
-    {n : ℕ} (x y : Fin n → M) (k : ℕ) (ℓ : Fin n)
-    (h_disjoint : BlockwiseDisjoint x y)
-    (h_coprime : ∀ i, AreCoprime (x i) (y i)) :
-    ∃ (E : ((i : Fin n) → if i = ℓ then 
-              LabeledFactorizations k (x i) × LabeledFactorizations k (y i)
-            else 
-              LabeledFactorizations 2 (x i) × LabeledFactorizations 2 (y i)) ≃ 
-           LabeledFactorizations k (∏ i, x i * y i)), True := by
-  sorry
 
 /-!
 ## Main Result: Proposition 5.3

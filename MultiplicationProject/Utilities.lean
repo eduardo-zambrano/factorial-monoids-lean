@@ -129,17 +129,4 @@ lemma Lemma_Blockwise_Restrict {M : Type*} [CommMonoid M] {m : ℕ}
   specialize h_disjoint (Fin.castSucc i) (Fin.castSucc j)
   aesop
 
-/- Aristotle failed to find a proof. -/
-/-- If M satisfies PP-P and x, y are coprime, then Support(x * y) ⊆ Support x ∪ Support y.
-
-    Note: This is easy to prove AFTER we have PP-P (from CFI). The proof uses the fact
-    that atoms are prime under PP-P: if p | x*y then p | x or p | y.
-    
-    This lemma is deferred to after PP-P is established. -/
-lemma Support_Union_of_Coprime {M : Type*} [CommMonoid M] (h_reduced : Reduced M) 
-    (h_atomic : Atomic M) (h_ppp : PP_P M)
-    (x y : M) (h_coprime : AreCoprime x y) :
-    Support (x * y) ⊆ Support x ∪ Support y := by
-  sorry
-
 end
