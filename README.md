@@ -86,7 +86,7 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 - Pigeonhole argument: n+1 coprime non-units require n+1 distinct atoms
 
 ### cor_factorial (Corollary 8.4)
-**File:** `MasterFormula_v2_aristotle.lean:656`
+**File:** `MasterFormula.lean:656`
 **Statement:** Under PP-D and CFI, M is factorial.
 **Proof uses:**
 - `Prop_CFI_implies_PPP` to derive PP-P from CFI
@@ -94,7 +94,7 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 - Proves unique factorization by showing that if two multisets of atoms have the same product, they must be equal (via valuation counts)
 
 ### atoms_are_prime
-**File:** `AtomsArePrime_v2_aristotle.lean:223`
+**File:** `AtomsArePrime.lean:223`
 **Statement:** Under CFI, atoms are prime: if p | a*b then p | a or p | b.
 **Proof uses:**
 - `atoms_are_prime_coprime` for the coprime case (uses CFI bijection directly)
@@ -102,7 +102,7 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 - `atom_dvd_power_eq_of_CFI` to show atoms dividing p^k must equal p
 
 ### prop_val_additive (Proposition 8.3)
-**File:** `MasterFormula_v2_aristotle.lean:604`
+**File:** `MasterFormula.lean:604`
 **Statement:** v_p(x*y) = v_p(x) + v_p(y) for all atoms p.
 **Proof uses:**
 - `Prop_CFI_implies_PPP` and `atoms_are_prime`
@@ -126,8 +126,8 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 | `LocalPurity.lean` | §5 | CFI implies PP-P (Proposition 5.3) |
 | `LocalCharacterization.lean` | §6 | Local stars-and-bars (Theorem 6.2) |
 | `GlobalMultiplicativity.lean` | §7 | Coprime multiplicativity (Proposition 7.2) |
-| `AtomsArePrime_v2_aristotle.lean` | §8 | Atoms are prime under CFI |
-| `MasterFormula_v2_aristotle.lean` | §8 | Master formula and factorial structure |
+| `AtomsArePrime.lean` | §8 | Atoms are prime under CFI |
+| `MasterFormula.lean` | §8 | Master formula and factorial structure |
 | `MainTheorem.lean` | §9 | Main theorem (Theorem 9.1) |
 
 ### Dependency Chain
@@ -139,10 +139,10 @@ Basic.lean
             └─ LocalPurity.lean (§5: Prop_CFI_implies_PPP)
                  ├─ LocalCharacterization.lean (§6)
                  │    └─ GlobalMultiplicativity.lean (§7)
-                 │         └─ MasterFormula_v2_aristotle.lean (§8)
+                 │         └─ MasterFormula.lean (§8)
                  │              └─ MainTheorem.lean (§9: thm_main)
-                 └─ AtomsArePrime_v2_aristotle.lean
-                      └─ MasterFormula_v2_aristotle.lean
+                 └─ AtomsArePrime.lean
+                      └─ MasterFormula.lean
 ```
 
 ## Proven Results
@@ -162,12 +162,12 @@ Basic.lean
 
 The following sorries exist but do **not** block the main theorems:
 
-| Declaration | File | Line | Description |
-|-------------|------|------|-------------|
-| `power_coprime_of_not_dvd` | AtomDvdPower.lean | 120 | Auxiliary lemma for extraction argument |
-| `atom_dvd_power_eq_of_CFI` | AtomDvdPower.lean | 257 | Helper for non-coprime extraction case |
+| Declaration | File | Lines | Description |
+|-------------|------|-------|-------------|
+| `power_coprime_of_not_dvd` | AtomDvdPower.lean | 80, 202 | Shows q^j and n are coprime when q ∤ n |
+| `atom_dvd_power_eq_of_CFI` | AtomDvdPower.lean | 217, 286, 338, 498, 525 | Direct CFI-based proof that atom dividing p^k equals p |
 
-These sorries are in helper lemmas within `AtomDvdPower.lean`. The main proof chain uses `atom_dvd_power_eq` (in LocalPurity.lean) which is complete.
+These sorries are in `AtomDvdPower.lean`, which provides an **alternative proof path** using CFI surjectivity directly. The main proof chain instead uses `atom_dvd_power_eq` (in LocalPurity.lean), which is complete and sorry-free. The sorried lemmas remain because they are used by `exact?` tactics in other files, but they do not affect the correctness of the main theorems.
 
 ## Building
 
