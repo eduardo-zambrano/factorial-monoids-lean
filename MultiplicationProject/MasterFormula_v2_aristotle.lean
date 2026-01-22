@@ -258,16 +258,6 @@ theorem cor_squarefree {M : Type*} [CommMonoid M]
 These theorems can now use the proven atoms_are_prime lemma.
 -/
 
-/-- **Lemma 8.1**: Primewise decomposition.
-    Note: The actual proof is in lem_primewise_impl below (after prop_val_additive).
-    This stub uses sorry to allow thm_master to reference it; see lem_primewise_impl for the proof. -/
-theorem lem_primewise {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
-    (m : M) (hm : ¬IsUnit m) :
-    ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
-      m = S.prod (fun p => p ^ PValuation p m) := by
-  sorry -- See lem_primewise_impl below for the actual proof
-
 /- **Theorem 8.2**: Master counting formula.
 
     Under (PP-D) and (CFI), for any m ∈ M and k ≥ 1:
@@ -326,35 +316,6 @@ lemma count_finset_prod_of_coprime {M : Type*} [CommMonoid M]
         rw [ Finset.prod_insert hi, prop_coprime_mult h_finite h_cfi hk h_coprime_prod, ih fun i hi j hj hij => h_coprime i ( Finset.mem_insert_of_mem hi ) j ( Finset.mem_insert_of_mem hj ) hij, Finset.prod_insert hi ]
 
 end AristotleLemmas
-
-theorem thm_master {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M)
-    (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
-    (m : M) (k : ℕ) (hk : k ≥ 1) :
-    ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
-      LabeledFactorizationCount k m = S.prod (fun p => Nat.choose (PValuation p m + k - 1) (k - 1)) := by
-  have h_ppp : PP_P M := Prop_CFI_implies_PPP h_reduced h_atomic h_cfi
-  have h_prime : ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b :=
-    atoms_are_prime h_reduced h_atomic h_cfi
-  -- Apply Lemma 8.1 to find the set S of atoms.
-  have hS : ∃ S : Finset M, (∀ p ∈ S, p ∈ Atoms M) ∧ m = S.prod (fun p => p ^ PValuation p m) := by
-    have h_prod : ∀ m : M, ¬IsUnit m → ∃ S : Finset M, (∀ p ∈ S, p ∈ Atoms M) ∧ m = S.prod (fun p => p ^ PValuation p m) := by
-      apply_rules [ lem_primewise ];
-    by_cases hm : IsUnit m;
-    · refine' ⟨ ∅, _, _ ⟩ <;> simp_all +decide [ Finset.prod_empty ];
-      exact?;
-    · exact h_prod m hm;
-  -- Apply the multiplicative property of factorization counts over coprime products.
-  have h_factorization : LabeledFactorizationCount k m = ∏ p ∈ hS.choose, LabeledFactorizationCount k (p ^ PValuation p m) := by
-    have h_factorization : ∀ {S : Finset M} {g : M → M}, (∀ p ∈ S, p ∈ Atoms M) → (∀ p ∈ S, ∀ q ∈ S, p ≠ q → AreCoprime (g p) (g q)) → LabeledFactorizationCount k (S.prod g) = S.prod (fun p => LabeledFactorizationCount k (g p)) := by
-      intros S g hg_atoms hg_coprime;
-      convert count_finset_prod_of_coprime h_reduced h_atomic h_cfi h_finite hk S g hg_coprime using 1;
-    convert h_factorization hS.choose_spec.1 ( fun p hp q hq hpq => ?_ ) using 1;
-    · rw [ ← hS.choose_spec.2 ];
-    · exact coprime_powers_of_distinct_atoms h_reduced h_ppp ( hS.choose_spec.1 p hp ) ( hS.choose_spec.1 q hq ) hpq _ _;
-  use hS.choose;
-  exact ⟨ hS.choose_spec.1, h_factorization.trans ( Finset.prod_congr rfl fun p hp => by rw [ Theorem_Local_SB h_ppd h_ppp p ( hS.choose_spec.1 p hp ) _ _ hk ] ) ⟩
 
 /- **Proposition 8.3**: Additivity of valuations.
 
@@ -631,23 +592,108 @@ theorem prop_val_additive {M : Type*} [CommMonoid M]
   rw [ hx, hy, pow_add, mul_mul_mul_comm ];
   rw [ ← hx, ← hy ]
 
-/-- **Lemma 8.1 (implementation)**: Primewise decomposition.
+/-- For a multiset of atoms, the p-valuation of the product equals the count of p.
+    This is extracted from the proof of cor_factorial. -/
+lemma PValuation_multiset_prod_eq_count {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+    (s : Multiset M) (hs : ∀ a ∈ s, a ∈ Atoms M) (p : M) (hp : p ∈ Atoms M) :
+    PValuation p s.prod = Multiset.count p s := by
+  have h_prime : ∀ q ∈ Atoms M, ∀ a b : M, q ∣ a * b → q ∣ a ∨ q ∣ b :=
+    atoms_are_prime h_reduced h_atomic h_cfi
+  induction' s using Multiset.induction with a s ih generalizing p
+  · -- empty case
+    simp +decide [PValuation]
+    rw [csSup_eq_of_forall_le_of_forall_lt_exists_gt] <;> norm_num
+    · exact ⟨0, by simp +decide⟩
+    · intro e he
+      cases e <;> simp_all +decide [pow_succ']
+      exact hp.1 (isUnit_of_dvd_one (dvd_of_mul_right_dvd he))
+  · -- cons case
+    have ha : a ∈ Atoms M := hs a (Multiset.mem_cons_self a s)
+    have hs' : ∀ b ∈ s, b ∈ Atoms M := fun b hb => hs b (Multiset.mem_cons_of_mem hb)
+    have h_val_sum : PValuation p (a * s.prod) = PValuation p a + PValuation p s.prod :=
+      prop_val_additive h_reduced h_atomic h_ppd h_cfi p hp a s.prod
+    cases eq_or_ne a p <;> simp_all +decide [PValuation]
+    · -- a = p case
+      rw [add_comm, csSup_eq_of_forall_le_of_forall_lt_exists_gt] <;> norm_num
+      · exact ⟨1, by simp +decide⟩
+      · exact fun a a_2 => lemma_pow_dvd_atom h_reduced p p hp hp a a_2
+      · exact ⟨1, by simp +decide⟩
+    · -- a ≠ p case
+      have h_val_a : PValuation p a = 0 := by
+        have h_not_dvd : ¬p ∣ a := by
+          have h_coprime : AreCoprime p a := coprime_of_distinct_atoms h_reduced hp ha (Ne.symm ‹a ≠ p›)
+          exact fun h => by have := h_prime p hp a a (by simpa [sq] using h.mul_left a); simp_all +decide [AreCoprime]
+        exact csSup_eq_of_forall_le_of_forall_lt_exists_gt ⟨0, by simp +decide⟩
+          (fun e he => Nat.le_of_not_lt fun h => h_not_dvd <| dvd_trans (dvd_pow_self _ <| by linarith) he)
+          fun e he => ⟨0, by simp +decide, by linarith⟩
+      simp_all +decide [PValuation]
+      rw [Multiset.count_cons_of_ne]; aesop
+
+/-- **Lemma 8.1**: Primewise decomposition.
 
     The proof strategy is:
     1. By atomicity, m factors into a multiset s of atoms
     2. The product s.prod equals the finset product ∏_{p ∈ s.toFinset} p^{count p s}
-    3. By prop_val_additive, count p s = v_p(m)
-
-    TODO: Complete proof requires fixing Multiset API usage.
-    The main theorem cor_factorial is proven independently of this lemma. -/
-theorem lem_primewise_impl {M : Type*} [CommMonoid M]
+    3. By PValuation_multiset_prod_eq_count, count p s = v_p(m) -/
+theorem lem_primewise {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (m : M) (hm : ¬IsUnit m) :
     ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
       m = S.prod (fun p => p ^ PValuation p m) := by
-  -- The proof requires multiset manipulation lemmas
-  -- For now, we note that cor_factorial is proven without this lemma
-  sorry
+  -- Step 1: By atomicity, get multiset s of atoms with m = s.prod
+  obtain ⟨s, hs_atoms, hs_prod⟩ := h_atomic m hm
+  -- Step 2: Take S = s.toFinset
+  use s.toFinset
+  constructor
+  · -- All elements of s.toFinset are atoms
+    intro p hp
+    exact hs_atoms p (Multiset.mem_toFinset.mp hp)
+  · -- m = S.prod (fun p => p ^ PValuation p m)
+    -- First show that s.count p = PValuation p m for each atom p
+    have h_count_eq : ∀ p ∈ s.toFinset, Multiset.count p s = PValuation p m := by
+      intro p hp
+      have hp_atom : p ∈ Atoms M := hs_atoms p (Multiset.mem_toFinset.mp hp)
+      rw [← hs_prod]
+      exact (PValuation_multiset_prod_eq_count h_reduced h_atomic h_ppd h_cfi s hs_atoms p hp_atom).symm
+    -- Use Finset.prod_multiset_count and substitute
+    calc m = s.prod := hs_prod.symm
+      _ = ∏ p ∈ s.toFinset, p ^ Multiset.count p s := Finset.prod_multiset_count s
+      _ = ∏ p ∈ s.toFinset, p ^ PValuation p m := by
+          apply Finset.prod_congr rfl
+          intro p hp
+          rw [h_count_eq p hp]
+
+/-- **Theorem 8.2**: Master counting formula.
+
+    Under (PP-D) and (CFI), for any m ∈ M and k ≥ 1:
+    F_k(m) = ∏_{p ∈ P} C(v_p(m) + k - 1, k - 1) -/
+theorem thm_master {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_ppd : PP_D M) (h_cfi : CFI M)
+    (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
+    (m : M) (k : ℕ) (hk : k ≥ 1) :
+    ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
+      LabeledFactorizationCount k m = S.prod (fun p => Nat.choose (PValuation p m + k - 1) (k - 1)) := by
+  have h_ppp : PP_P M := Prop_CFI_implies_PPP h_reduced h_atomic h_cfi
+  have h_prime : ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b :=
+    atoms_are_prime h_reduced h_atomic h_cfi
+  -- Apply Lemma 8.1 to find the set S of atoms.
+  have hS : ∃ S : Finset M, (∀ p ∈ S, p ∈ Atoms M) ∧ m = S.prod (fun p => p ^ PValuation p m) := by
+    by_cases hm : IsUnit m
+    · refine' ⟨ ∅, _, _ ⟩ <;> simp_all +decide [ Finset.prod_empty ]
+      exact?
+    · exact lem_primewise h_reduced h_atomic h_ppd h_cfi m hm
+  -- Apply the multiplicative property of factorization counts over coprime products.
+  have h_factorization : LabeledFactorizationCount k m = ∏ p ∈ hS.choose, LabeledFactorizationCount k (p ^ PValuation p m) := by
+    have h_factorization : ∀ {S : Finset M} {g : M → M}, (∀ p ∈ S, p ∈ Atoms M) → (∀ p ∈ S, ∀ q ∈ S, p ≠ q → AreCoprime (g p) (g q)) → LabeledFactorizationCount k (S.prod g) = S.prod (fun p => LabeledFactorizationCount k (g p)) := by
+      intros S g hg_atoms hg_coprime
+      convert count_finset_prod_of_coprime h_reduced h_atomic h_cfi h_finite hk S g hg_coprime using 1
+    convert h_factorization hS.choose_spec.1 ( fun p hp q hq hpq => ?_ ) using 1
+    · rw [ ← hS.choose_spec.2 ]
+    · exact coprime_powers_of_distinct_atoms h_reduced h_ppp ( hS.choose_spec.1 p hp ) ( hS.choose_spec.1 q hq ) hpq _ _
+  use hS.choose
+  exact ⟨ hS.choose_spec.1, h_factorization.trans ( Finset.prod_congr rfl fun p hp => by rw [ Theorem_Local_SB h_ppd h_ppp p ( hS.choose_spec.1 p hp ) _ _ hk ] ) ⟩
 
 /-- **Corollary 8.4**: Factorial structure.
 
