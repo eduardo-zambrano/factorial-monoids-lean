@@ -48,7 +48,7 @@ The proof has two parts:
 (b) CPL forces the atom set to be countably infinite, hence M ≅ (ℕ, ×)
 -/
 
-import MultiplicationProject.MasterFormula_v2_aristotle
+import MultiplicationProject.MasterFormula
 
 
 set_option linter.mathlibStandardSet false

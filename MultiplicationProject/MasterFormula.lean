@@ -50,7 +50,7 @@ Authors: Eduardo Zambrano
 
 # Section 8: Master Formula and Structural Consequences (v2)
 
-This version imports the proven `atoms_are_prime` lemma from AtomsArePrime_v2_aristotle.lean
+This version imports the proven `atoms_are_prime` lemma from AtomsArePrime.lean
 to avoid re-proving it.
 
 Main results to prove:
@@ -62,7 +62,7 @@ Main results to prove:
 -/
 
 import MultiplicationProject.GlobalMultiplicativity
-import MultiplicationProject.AtomsArePrime_v2_aristotle
+import MultiplicationProject.AtomsArePrime
 
 -- Harmonic `generalize_proofs` tactic (removed to avoid redeclaration conflicts)
 
