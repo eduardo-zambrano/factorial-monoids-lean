@@ -17,9 +17,9 @@ theorem thm_main {M : Type*} [CommMonoid M]
 
 Under axioms PP-D (powers distinct), CFI (coprime parts factor independently), and CPL (coprime products exist at every level), a reduced atomic commutative monoid M is factorial with infinitely many atoms, hence isomorphic to (ℕ, ×).
 
-### Explicit Counting Formula (Theorem 8.2): INCOMPLETE
+### Explicit Counting Formula (Theorem 8.2): COMPLETE
 
-The master counting formula `thm_master` has one blocking sorry:
+The master counting formula `thm_master` is **fully formalized with no sorries**:
 
 ```lean
 theorem thm_master {M : Type*} [CommMonoid M]
@@ -31,11 +31,7 @@ theorem thm_master {M : Type*} [CommMonoid M]
       LabeledFactorizationCount k m = S.prod (fun p => Nat.choose (PValuation p m + k - 1) (k - 1))
 ```
 
-**Remaining sorry:** `lem_primewise` (Lemma 8.1) in `MasterFormula_v2_aristotle.lean:269`
-
-This lemma establishes the primewise decomposition m = ∏ p^{v_p(m)}, which requires showing that the multiset product of atomic factorizations can be rewritten as a finset product indexed by distinct atoms. The proof requires multiset manipulation lemmas that are not yet complete.
-
-**Note:** The explicit counting formula is not needed for the main structural result (Theorem 9.1). The factorial structure is proven directly via unique factorization arguments using valuation counts.
+This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1).
 
 ## Logical Structure of the Proof
 
@@ -144,17 +140,15 @@ Basic.lean                        -- Definitions: Reduced, Atomic, CFI, PP-D, PP
 | `prop_val_additive` | Proposition 8.3 | ✅ | Additivity of p-adic valuations |
 | `Prop_CFI_implies_PPP` | Proposition 5.3 | ✅ | CFI implies PP-P |
 | `atoms_are_prime` | — | ✅ | Atoms are prime under CFI |
-| `thm_master` | Theorem 8.2 | ❌ | Master counting formula (blocked by `lem_primewise`) |
-| `lem_primewise` | Lemma 8.1 | ❌ | Primewise decomposition m = ∏ p^{v_p(m)} |
+| `thm_master` | Theorem 8.2 | ✅ | Master counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1) |
+| `lem_primewise` | Lemma 8.1 | ✅ | Primewise decomposition m = ∏ p^{v_p(m)} |
 
 ## Remaining Sorries
 
-The following sorries exist but do **not** block the main theorem:
+The following sorries exist but do **not** block the main theorems:
 
 | Declaration | File | Line | Description |
 |-------------|------|------|-------------|
-| `lem_primewise` | MasterFormula_v2_aristotle.lean | 269 | Primewise decomposition (blocks `thm_master`) |
-| `lem_primewise_impl` | MasterFormula_v2_aristotle.lean | 650 | Implementation of primewise decomposition |
 | `Support_Union_of_Coprime` | Utilities.lean | 143 | Unused helper lemma |
 | `Blockwise_CFI_k_general` | LocalPurity.lean | 533 | Generalized blockwise bijection (unused) |
 
