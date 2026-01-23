@@ -138,18 +138,18 @@ noncomputable section AristotleLemmas
 /-
 If p divides q^k * m and is coprime to q^k, then p divides m.
 -/
-lemma atom_dvd_power_mul_coprime {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_cfi : CFI M)
+lemma atom_dvd_power_mul_coprime {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
     {p q m : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (k : ℕ)
     (h_coprime : AreCoprime (q ^ k) m) (h_dvd : p ∣ q ^ k * m) (h_neq : p ≠ q) :
     p ∣ m := by
       have := atoms_are_prime_coprime h_reduced h_cfi hp h_coprime h_dvd;
-      exact this.resolve_left ( fun h => h_neq <| atom_dvd_power_eq_of_CFI h_reduced h_cfi hq hp h )
+      exact this.resolve_left ( fun h => h_neq <| atom_dvd_power_eq_of_CFI h_reduced h_atomic h_cfi hq hp h )
 
 /-
 If q is an atom not in a multiset of atoms t, and the inductive hypothesis holds for t, then q^k is coprime to t.prod.
 -/
-lemma coprime_pow_prod_of_forall_neq {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (_h_cfi : CFI M)
+lemma coprime_pow_prod_of_forall_neq {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
     (q : M) (hq : q ∈ Atoms M)
     (t : Multiset M) (_ht : ∀ x ∈ t, x ∈ Atoms M)
     (h_neq : ∀ x ∈ t, x ≠ q)
@@ -163,13 +163,13 @@ lemma coprime_pow_prod_of_forall_neq {M : Type*} [CommMonoid M]
         simp only [Support, Set.mem_setOf_eq, not_and]
         intro _ h_dvd
         exact h_coprime q hq h_dvd rfl
-      exact power_coprime_of_not_in_support h_reduced _h_cfi hq h_not_in_supp k
+      exact power_coprime_of_not_in_support h_reduced h_atomic h_cfi hq h_not_in_supp k
 
 /-
 If an atom p divides the product of a multiset of atoms s, then p must be in s.
 -/
-lemma atom_dvd_multiset_prod {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_cfi : CFI M)
+lemma atom_dvd_multiset_prod {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
     (s : Multiset M) (hs : ∀ x ∈ s, x ∈ Atoms M)
     (p : M) (hp : p ∈ Atoms M) (h_dvd : p ∣ s.prod) :
     p ∈ s := by
@@ -194,14 +194,14 @@ lemma atom_dvd_multiset_prod {M : Type*} [CommMonoid M]
         -- We want to apply `atom_dvd_power_mul_coprime`.
         -- We need `AreCoprime (q^k) t.prod`.
         have h_coprime : AreCoprime (q ^ Multiset.count q s) (s.filter (· ≠ q)).prod := by
-          apply coprime_pow_prod_of_forall_neq h_reduced h_cfi q (hs q hq_mem) (s.filter (· ≠ q)) (fun x hx => hs x (Multiset.mem_filter.mp hx).left) (fun x hx => by
+          apply coprime_pow_prod_of_forall_neq h_reduced h_atomic h_cfi q (hs q hq_mem) (s.filter (· ≠ q)) (fun x hx => hs x (Multiset.mem_filter.mp hx).left) (fun x hx => by
             exact Multiset.mem_filter.mp hx |>.2) (fun p hp h_dvd => by
             apply ih (s.filter (· ≠ q)) (by
             refine' lt_of_le_of_ne ( Multiset.filter_le _ _ ) _;
             exact fun h => by simp_all +singlePass ;) p hp (fun x hx => hs x (Multiset.mem_filter.mp hx).left) h_dvd) (Multiset.count q s);
         -- Apply `atom_dvd_power_mul_coprime` with `p, q, k, t.prod`.
         have h_div_t : p ∣ (s.filter (· ≠ q)).prod := by
-          apply atom_dvd_power_mul_coprime h_reduced h_cfi hp (hs q hq_mem) (Multiset.count q s) h_coprime h_div;
+          apply atom_dvd_power_mul_coprime h_reduced h_atomic h_cfi hp (hs q hq_mem) (Multiset.count q s) h_coprime h_div;
           exact fun h => hq ⟨ q, hq_mem, h ⟩;
         specialize ih ( Multiset.filter ( fun x => x ≠ q ) s ) ?_ p hp ?_ h_div_t;
         · refine' lt_of_le_of_ne ( Multiset.filter_le _ _ ) _;
@@ -225,7 +225,7 @@ lemma prod_eq_pow_count_mul_prod_filter_ne {M : Type*} [CommMonoid M]
 
 end AristotleLemmas
 
-lemma atoms_are_prime {M : Type*} [CommMonoid M]
+lemma atoms_are_prime {M : Type*} [CancelCommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M) :
     ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b := by
   intro p hp a b h_dvd
@@ -298,7 +298,7 @@ lemma atoms_are_prime {M : Type*} [CommMonoid M]
           contrapose! hb; aesop;);
           aesop;
         have h_coprime_div : p ∣ (s_a + s_b).prod → p ∈ s_a + s_b := by
-          apply atom_dvd_multiset_prod h_reduced h_cfi (s_a + s_b) (by
+          apply atom_dvd_multiset_prod h_reduced h_atomic h_cfi (s_a + s_b) (by
           grind) p hp;
         cases Multiset.mem_add.mp ( h_coprime_div ( by simpa only [ hs_a.1, hs_b.1, Multiset.prod_add ] using h_div ) ) <;> simp_all +decide;
         · exact Or.inl ( Multiset.dvd_prod ‹_› );

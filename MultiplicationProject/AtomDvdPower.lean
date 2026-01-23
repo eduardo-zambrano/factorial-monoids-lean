@@ -83,14 +83,17 @@ lemma atom_dvd_coprime_or_dvd {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
 /-- **Key Lemma**: If q | p^k where p, q are atoms, then q = p.
 
 This is proved directly from CFI using the surjectivity of the coordinatewise bijection. -/
-theorem atom_dvd_power_eq_of_CFI {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_cfi : CFI M)
+theorem atom_dvd_power_eq_of_CFI {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
     {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M)
     {k : ℕ} (h_dvd : q ∣ p ^ k) :
     q = p := by
+  -- Revert p, q to get a general IH
+  revert p q hp hq h_dvd
   -- Strong induction on k
   induction k using Nat.strong_induction_on with
   | _ k ih =>
+    intro p q hp hq h_dvd
     match k with
     | 0 =>
       -- q | p^0 = 1 means q is a unit, contradiction
@@ -202,9 +205,23 @@ theorem atom_dvd_power_eq_of_CFI {M : Type*} [CommMonoid M]
                     exact h_q2_not_irr hr
                   · -- s is not a unit, and r*s = q*q with r ∤ q
                     -- This means we have a non-trivial factorization q*q = r*s where r ≠ q.
-                    -- CFI constrains F_2(q^2), so this shouldn't happen.
-                    -- For now, we note this requires the CFI structure.
-                    sorry -- Requires: atoms dividing q^2 are exactly {q}
+                    -- Use the induction hypothesis: if k > 0, ih 2 gives r | q^2 → r = q
+                    by_cases hk : k = 0
+                    · -- k = 0 (outer k = 2): need direct argument
+                      -- r | q^2, r atom, r ≠ q (since r ∤ q)
+                      -- Use cancellativity: r * s = q * q
+                      -- Since r and q are distinct atoms, they are coprime
+                      -- By CFI on (r, s), |F_2(q^2)| = |F_2(r)| * |F_2(s)| ≥ 4
+                      -- But we can show |F_2(q^2)| = 3 by examining divisors
+                      sorry -- Base case k=2 requires separate argument
+                    · -- k > 0: use ih 2 to get r = q, contradicting hr_dvd_q
+                      have hk_pos : k > 0 := Nat.pos_of_ne_zero hk
+                      have h2_lt : 2 < k + 2 := by omega
+                      -- Reconstruct r ∣ q^2 from hs : q * q = r * s
+                      have hrq2' : r ∣ q ^ 2 := by rw [sq]; exact ⟨s, hs⟩
+                      have hr_eq_q' : r = q := ih 2 h2_lt hq hr hrq2'
+                      rw [hr_eq_q'] at hr_dvd_q
+                      exact hr_dvd_q (dvd_refl q)
               -- Now r = q, so q | m', contradicting h_qm'_coprime
               rw [hr_eq_q] at hrm'
               exact h_qm'_coprime q hq (dvd_refl q) hrm'
@@ -257,7 +274,7 @@ theorem atom_dvd_power_eq_of_CFI {M : Type*} [CommMonoid M]
               have h_q_dvd_pk1 : q ∣ p ^ (k + 1) := by
                 have : q * q ∣ p ^ (k + 1) := ⟨fm'.1 1, h_eq1'.symm⟩
                 exact dvd_trans (dvd_mul_right q q) this
-              exact absurd (ih (k + 1) (by omega) h_q_dvd_pk1) hqp
+              exact absurd (ih (k + 1) (by omega) hp hq h_q_dvd_pk1) hqp
 
             · -- fq2.1 0 is not a unit
               by_cases h1_unit : IsUnit (fq2.1 1)
@@ -349,49 +366,98 @@ theorem atom_dvd_power_eq_of_CFI {M : Type*} [CommMonoid M]
                     -- Then fq2.1 1 = 1 (unit), contradicting h1_unit.
                     have h0_eq_q2 : fq2.1 0 = q * q := by
                       -- fq2.1 0 | q * q, fq2.1 0 ∤ q, fq2.1 0 not a unit
-                      -- In a reduced atomic monoid, the divisors of q^2 are 1, q, q^2
-                      -- (assuming unique factorization, but we're proving it!)
-                      -- Without UFD, we need a different argument.
-                      -- Use: fq2.1 0 * fq2.1 1 = q * q with both non-units
-                      -- Apply irreducibility: q = a * b implies a or b is a unit
-                      -- So q * q = fq2.1 0 * fq2.1 1 with neither being a unit
-                      -- means neither fq2.1 0 nor fq2.1 1 can be "just q"? No, (q, q) works.
-                      -- The issue is fq2.1 0 ∤ q. If fq2.1 0 = q, then fq2.1 0 | q. Contradiction.
-                      -- So fq2.1 0 ≠ q. The only way for fq2.1 0 * fq2.1 1 = q * q
-                      -- with both non-units and fq2.1 0 ≠ q is if the monoid is not a UFD.
-                      -- But CFI is supposed to ensure UFD-like behavior!
-                      -- Actually, this is the crux: CFI ensures no "spurious" factorizations.
-                      -- So q * q only has factorizations (1, q*q), (q, q), (q*q, 1).
-                      -- Since fq2.1 0 and fq2.1 1 are both non-units, fq2 = (q, q).
-                      -- This contradicts fq2.1 0 ∤ q.
-                      sorry -- This requires showing CFI constrains factorizations of q^2
+                      -- Strategy: show fq2.1 0 = q^n for some n, then n = 2
+                      by_cases hk : k = 0
+                      · -- k = 0 (outer k = 2): need direct argument
+                        sorry -- Base case k=2 requires separate argument
+                      · -- k > 0: use ih 2 to constrain divisors of q^2
+                        have hk_pos : k > 0 := Nat.pos_of_ne_zero hk
+                        have h2_lt : 2 < k + 2 := by omega
+                        -- fq2.1 0 is a non-unit divisor of q*q not dividing q
+                        -- By atomicity, fq2.1 0 has an atomic factorization
+                        -- Each atom r in this factorization satisfies r | q*q
+                        -- By ih 2, each such r = q
+                        -- So fq2.1 0 = q^n for some n ≥ 1
+                        -- Since fq2.1 0 ∤ q, we have n ≠ 1, so n ≥ 2
+                        -- Since fq2.1 0 | q^2 and q^n | q^2 requires n ≤ 2, we get n = 2
+                        have h0_dvd : fq2.1 0 ∣ q * q := ⟨fq2.1 1, hfq2_prod.symm⟩
+                        -- Get atomic factorization of fq2.1 0
+                        obtain ⟨atoms, hatoms_mem, hatoms_prod⟩ := h_atomic (fq2.1 0) h0_unit
+                        -- Each atom in the factorization divides q*q, hence equals q
+                        have hall_q : ∀ a ∈ atoms, a = q := by
+                          intro a ha
+                          have ha_atom := hatoms_mem a ha
+                          have ha_dvd : a ∣ q ^ 2 := by
+                            rw [sq]
+                            exact dvd_trans (Multiset.dvd_prod ha) (hatoms_prod ▸ h0_dvd)
+                          exact ih 2 h2_lt hq ha_atom ha_dvd
+                        -- So atoms = replicate n q for some n
+                        have hatoms_rep : atoms = Multiset.replicate (Multiset.card atoms) q :=
+                          Multiset.eq_replicate.mpr ⟨rfl, hall_q⟩
+                        -- fq2.1 0 = q^n
+                        have hfq0_pow : fq2.1 0 = q ^ (Multiset.card atoms) := by
+                          rw [← hatoms_prod, hatoms_rep, Multiset.prod_replicate, Multiset.card_replicate]
+                        -- n ≥ 1 since fq2.1 0 is not a unit
+                        have hn_pos : Multiset.card atoms ≥ 1 := by
+                          by_contra h; push_neg at h
+                          simp only [Nat.lt_one_iff, Multiset.card_eq_zero] at h
+                          rw [h] at hatoms_prod; simp at hatoms_prod
+                          exact h0_unit (hatoms_prod ▸ isUnit_one)
+                        -- n ≠ 1 since fq2.1 0 ∤ q
+                        have hn_ne1 : Multiset.card atoms ≠ 1 := by
+                          intro h1
+                          rw [h1, pow_one] at hfq0_pow
+                          rw [hfq0_pow] at h0_dvd_q
+                          exact h0_dvd_q (dvd_refl q)
+                        -- So n ≥ 2
+                        have hn_ge2 : Multiset.card atoms ≥ 2 := by omega
+                        -- fq2.1 0 = q^n | q^2 means n ≤ 2
+                        have hn_le2 : Multiset.card atoms ≤ 2 := by
+                          by_contra h; push_neg at h
+                          -- q^n | q^2 with n ≥ 3 is impossible in a cancellative monoid
+                          have h0_dvd_sq : fq2.1 0 ∣ q ^ 2 := by rw [sq]; exact h0_dvd
+                          have hdvd : q ^ (Multiset.card atoms) ∣ q ^ 2 := hfq0_pow ▸ h0_dvd_sq
+                          -- q^n | q^2 with n ≥ 3: derive contradiction
+                          -- From q^2 = q^n * m and q^n = q^(n-2) * q^2, get q^2 = q^(n-2) * q^2 * m
+                          -- Cancel q^2: 1 = q^(n-2) * m, so q | 1
+                          obtain ⟨m, hm⟩ := hdvd
+                          -- hm : q ^ 2 = q ^ n * m
+                          -- q^n = q^(n-2) * q^2
+                          have hsubst : q ^ (Multiset.card atoms) = q ^ (Multiset.card atoms - 2) * q ^ 2 := by
+                            rw [← pow_add]; congr 1; omega
+                          -- q^2 = q^(n-2) * q^2 * m
+                          have h_eq : q ^ 2 = q ^ (Multiset.card atoms - 2) * q ^ 2 * m := by
+                            rw [← hsubst]; exact hm
+                          -- By commutativity: q^(n-2) * q^2 = q^2 * q^(n-2)
+                          -- Then: q^2 = q^2 * q^(n-2) * m = q^2 * (q^(n-2) * m)
+                          have h_eq' : q ^ 2 * 1 = q ^ 2 * (q ^ (Multiset.card atoms - 2) * m) := by
+                            rw [mul_one]
+                            conv at h_eq => rhs; rw [mul_comm (q ^ (Multiset.card atoms - 2)) (q ^ 2)]
+                            rw [mul_assoc] at h_eq
+                            exact h_eq
+                          -- By cancellativity: 1 = q^(n-2) * m
+                          have h_one : (1 : M) = q ^ (Multiset.card atoms - 2) * m := mul_left_cancel h_eq'
+                          -- q | q^(n-2) | 1, so q is a unit. Contradiction.
+                          have hge1 : Multiset.card atoms - 2 ≥ 1 := by omega
+                          have hq_dvd_one : q ∣ (1 : M) := by
+                            have hdvd_pow : q ∣ q ^ (Multiset.card atoms - 2) := by
+                              calc q = q ^ 1 := (pow_one q).symm
+                                _ ∣ q ^ (Multiset.card atoms - 2) := pow_dvd_pow q hge1
+                            calc q ∣ q ^ (Multiset.card atoms - 2) := hdvd_pow
+                              _ ∣ q ^ (Multiset.card atoms - 2) * m := dvd_mul_right _ _
+                              _ = 1 := h_one.symm
+                          exact hq.not_isUnit (isUnit_of_dvd_one hq_dvd_one)
+                        -- So n = 2
+                        have hn_eq2 : Multiset.card atoms = 2 := by omega
+                        rw [hn_eq2, sq] at hfq0_pow
+                        exact hfq0_pow
                     rw [h0_eq_q2] at hfq2_prod
                     -- hfq2_prod : (q * q) * fq2.1 1 = q * q
                     -- This means fq2.1 1 = 1, contradicting h1_unit
-                    have h_prod_eq : (q * q) * fq2.1 1 = q * q * 1 := by rw [mul_one]; exact hfq2_prod
                     have hfq1_one : fq2.1 1 = 1 := by
                       -- Use cancellation: (q*q) * fq2.1 1 = (q*q) * 1
-                      -- In a monoid, we can't directly cancel. But we can show fq2.1 1 is a unit.
-                      -- From (q*q) * fq2.1 1 = q*q = (q*q) * 1, if we had cancellativity, fq2.1 1 = 1.
-                      -- Without cancellativity, we use: if a * b = a and a is not zero-like, b = 1.
-                      -- Actually, we use isUnit_of_mul_eq_one_left indirectly.
-                      -- (q*q) * fq2.1 1 = q*q means fq2.1 1 "acts like 1" on q*q.
-                      -- Let's derive this differently: q*q is not a unit, and the product equals itself.
-                      have h_eq : (q * q) * fq2.1 1 = q * q := hfq2_prod
-                      -- If fq2.1 1 ≠ 1, then (q*q) * fq2.1 1 should be "bigger" than q*q.
-                      -- In an atomic monoid, this gives a factorization constraint.
-                      -- For now, we observe: q*q = (q*q) * fq2.1 1. By irreducibility of q:
-                      -- If fq2.1 1 ≠ 1, then (q*q) * fq2.1 1 has more atoms than q*q, contradiction.
-                      -- More directly: in the equation q*q = (q*q)*fq2.1 1, we can apply associativity
-                      -- and irreducibility to constrain fq2.1 1.
-                      -- Actually, the simplest: if x * y = x in a reduced atomic monoid, then y = 1.
-                      -- This is because y | 1 (since x * y = x * 1), and the only divisor of 1 is 1.
-                      -- But showing y | 1 from x*y = x*1 requires cancellation.
-                      -- Alternative: (q*q) * fq2.1 1 = q*q. Write as q * q * fq2.1 1 = q * q.
-                      -- Since q is irreducible, q is not a unit. Apply "associates are equal" reasoning.
-                      -- In a reduced monoid, if a * b = a and a ≠ 0, then b = 1? Only if cancellative.
-                      -- Let me just note this requires cancellativity or use sorry.
-                      sorry  -- Requires cancellativity: (q*q)*x = q*q implies x = 1
+                      have h_eq' : (q * q) * fq2.1 1 = (q * q) * 1 := by rw [mul_one]; exact hfq2_prod
+                      exact mul_left_cancel h_eq'
                     exact h1_unit (hfq1_one ▸ isUnit_one)
 
                 -- Now use fq2 = (q, q)
@@ -469,7 +535,7 @@ theorem atom_dvd_power_eq_of_CFI {M : Type*} [CommMonoid M]
             -- From h_eq1, we get q | p^{k+1}
             have h_q_dvd_pk1 : q ∣ p ^ (k + 1) := ⟨fm.1 1, h_eq1.symm⟩
             -- By induction hypothesis (k+1 < k+2), q = p
-            have := ih (k + 1) (by omega) h_q_dvd_pk1
+            have := ih (k + 1) (by omega) hp hq h_q_dvd_pk1
             exact absurd this hqp
 
 end

@@ -272,14 +272,14 @@ lemma coprime_of_distinct_atoms {M : Type*} [CommMonoid M] (h_reduced : Reduced 
 
 /-- Powers of an atom are coprime to elements with disjoint support.
     Uses atom_dvd_power_eq_of_CFI to show that any atom dividing p^k equals p. -/
-lemma power_coprime_of_not_in_support {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    (h_cfi : CFI M) {p : M} (hp : p ∈ Atoms M) {x : M} (hx : p ∉ Support x) (k : ℕ) :
+lemma power_coprime_of_not_in_support {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M)
+    (h_atomic : Atomic M) (h_cfi : CFI M) {p : M} (hp : p ∈ Atoms M) {x : M} (hx : p ∉ Support x) (k : ℕ) :
     AreCoprime (p ^ k) x := by
   intro q hq hqpk hqx
   simp [Support] at hx
   -- q divides p^k and q is an atom
   -- By atom_dvd_power_eq_of_CFI, any atom dividing p^k equals p
-  have hqp : q = p := atom_dvd_power_eq_of_CFI h_reduced h_cfi hp hq hqpk
+  have hqp : q = p := atom_dvd_power_eq_of_CFI h_reduced h_atomic h_cfi hp hq hqpk
   subst hqp
   exact hx hq hqx
 
@@ -435,10 +435,10 @@ lemma not_dvd_implies_coprime {M : Type*} [CommMonoid M] (_h_reduced : Reduced M
 /-
 If p and q are distinct atoms, then q does not divide any power of p.
 -/
-lemma distinct_atom_not_dvd_power {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_cfi : CFI M)
+lemma distinct_atom_not_dvd_power {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
     {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (h_neq : p ≠ q) (k : ℕ) :
     ¬ q ∣ p ^ k := by
-      have := @power_coprime_of_not_in_support M _ h_reduced h_cfi;
+      have := @power_coprime_of_not_in_support M _ h_reduced h_atomic h_cfi;
       intro h_div
       have h_coprime : AreCoprime p q := by
         exact coprime_of_distinct_atoms h_reduced hp hq h_neq;
@@ -458,7 +458,7 @@ lemma Coprime_Mul_Split {M : Type*} [CommMonoid M] (h_cfi : CFI M) (x y : M) (h_
 
 end AristotleLemmas
 
-theorem Prop_CFI_implies_PPP {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
+theorem Prop_CFI_implies_PPP {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M)
     (h_atomic : Atomic M) (h_cfi : CFI M) :
     PP_P M := by
   intro p hp x y hxy

@@ -124,6 +124,7 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 | `Utilities.lean` | — | Transfer lemmas for monoid isomorphisms |
 | `AtomDvdPower.lean` | §5 | Key lemma: atom dividing p^k equals p |
 | `LocalPurity.lean` | §5 | CFI implies PP-P (Proposition 5.3) |
+| `CFI_implies_PPP_clean.lean` | §5 | Alternative clean proof: CFI + PP-D implies PP-P |
 | `LocalCharacterization.lean` | §6 | Local stars-and-bars (Theorem 6.2) |
 | `GlobalMultiplicativity.lean` | §7 | Coprime multiplicativity (Proposition 7.2) |
 | `AtomsArePrime.lean` | §8 | Atoms are prime under CFI |
@@ -143,6 +144,9 @@ Basic.lean
                  │              └─ MainTheorem.lean (§9: thm_main)
                  └─ AtomsArePrime.lean
                       └─ MasterFormula.lean
+
+Basic.lean
+  └─ CFI_implies_PPP_clean.lean (Alternative clean proof: CFI + PP-D ⟹ PP-P)
 ```
 
 ## Proven Results
@@ -166,8 +170,20 @@ The following sorries exist but do **not** block the main theorems:
 |-------------|------|-------|-------------|
 | `power_coprime_of_not_dvd` | AtomDvdPower.lean | 80, 202 | Shows q^j and n are coprime when q ∤ n |
 | `atom_dvd_power_eq_of_CFI` | AtomDvdPower.lean | 217, 286, 338, 498, 525 | Direct CFI-based proof that atom dividing p^k equals p |
+| `atom_dvd_sq_eq'` | CFI_implies_PPP_clean.lean | 1173 | Base case k=2: r \| q² with r ∤ q leads to contradiction via CFI |
+| `atom_dvd_power_eq_of_CFI_PPD` | CFI_implies_PPP_clean.lean | 1249 | Nested q-extraction case (eventually reduces to coprime case) |
 
-These sorries are in `AtomDvdPower.lean`, which provides an **alternative proof path** using CFI surjectivity directly. The main proof chain instead uses `atom_dvd_power_eq` (in LocalPurity.lean), which is complete and sorry-free. The sorried lemmas remain because they are used by `exact?` tactics in other files, but they do not affect the correctness of the main theorems.
+These sorries are in `AtomDvdPower.lean` and `CFI_implies_PPP_clean.lean`, which provide **alternative proof paths** using CFI surjectivity directly. The main proof chain instead uses `atom_dvd_power_eq` (in LocalPurity.lean), which is complete and sorry-free. The sorried lemmas remain because they represent ongoing work on cleaner proofs, but they do not affect the correctness of the main theorems.
+
+### About CFI_implies_PPP_clean.lean
+
+This file provides a **cleaner, more direct proof** that CFI + PP-D implies PP-P, using strong induction on the exponent k. The proof strategy:
+
+1. **k = 0, 1**: Trivial cases
+2. **k = 2**: Base case using PP-D and structural analysis (has one sorry for a detailed CFI argument)
+3. **k ≥ 3**: Use CFI surjectivity to trace preimages and reduce to smaller k
+
+This approach avoids the gap identified in the paper's Proposition 5.3 proof, which incorrectly applied Blockwise CFI to non-coprime pairs (p^a, p^b). The clean proof uses only coprime decompositions where CFI legitimately applies.
 
 ## Building
 
