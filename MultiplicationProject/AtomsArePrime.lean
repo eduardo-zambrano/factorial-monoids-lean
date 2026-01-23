@@ -158,7 +158,12 @@ lemma coprime_pow_prod_of_forall_neq {M : Type*} [CommMonoid M]
     AreCoprime (q ^ k) t.prod := by
       have h_coprime : ∀ p ∈ Atoms M, p ∣ t.prod → p ≠ q := by
         exact fun p hp hp' => h_neq p ( h_ind p hp hp' );
-      exact?
+      -- Use power_coprime_of_not_in_support: need to show q ∉ Support (t.prod)
+      have h_not_in_supp : q ∉ Support t.prod := by
+        simp only [Support, Set.mem_setOf_eq, not_and]
+        intro _ h_dvd
+        exact h_coprime q hq h_dvd rfl
+      exact power_coprime_of_not_in_support h_reduced _h_cfi hq h_not_in_supp k
 
 /-
 If an atom p divides the product of a multiset of atoms s, then p must be in s.

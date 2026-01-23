@@ -393,7 +393,12 @@ lemma atom_dvd_cancel {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_atom
           have := a.2; have := b.2; simp_all +decide [ LabeledFactorizations ] ;
           replace h := congr_arg Subtype.val h; simp_all +decide [ labeledFactorizationMul ] ;
           exact ⟨ by simpa using congr_fun h 0, by simpa using congr_fun h 1 ⟩;
-        · exact?;
+        · -- Need: AreCoprime (p ^ k) u. Use power_coprime_of_not_in_support.
+          have h_not_in_supp : p ∉ Support u := by
+            simp only [Support, Set.mem_setOf_eq, not_and]
+            intro _ h_dvd
+            exact h_coprime p hp (dvd_refl p) h_dvd
+          exact power_coprime_of_not_in_support h_reduced h_cfi hp h_not_in_supp k;
       -- By `h_ppp`, `c` is a power of `p`.
       obtain ⟨l, hl⟩ : ∃ l : ℕ, c = p ^ l := by
         have h_c_power : c ∈ Submonoid.powers p := by
@@ -408,7 +413,12 @@ lemma atom_dvd_cancel {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_atom
       have hc_unit : c ∈ Submonoid.powers 1 := by
         have hc_unit : AreCoprime c u := by
           have hc_unit : AreCoprime (p ^ l) u := by
-            exact?;
+            -- Use power_coprime_of_not_in_support with h_coprime : AreCoprime p u
+            have h_not_in_supp : p ∉ Support u := by
+              simp only [Support, Set.mem_setOf_eq, not_and]
+              intro _ h_dvd
+              exact h_coprime p hp (dvd_refl p) h_dvd
+            exact power_coprime_of_not_in_support h_reduced h_cfi hp h_not_in_supp l;
           aesop;
         have hc_unit : c ∣ u := by
           exact hcd ▸ dvd_mul_right _ _;
