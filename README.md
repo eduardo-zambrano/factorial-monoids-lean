@@ -2,8 +2,6 @@
 
 A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labeled Factorization Counts" by Eduardo Zambrano.
 
-## Formalization Status: COMPLETE
-
 **All main theorems from the paper (§5–§9) are fully formalized with no sorries.**
 
 ### Main Theorem (Theorem 9.1)
@@ -53,10 +51,6 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 | **Thm 9.1** | **Main result: M ≅ (ℕ,×)** | `thm_main` | ✅ |
 | — | Atoms infinite under CPL | `atoms_infinite_of_CPL` | ✅ |
 | — | Atoms are prime under CFI | `atoms_are_prime` | ✅ |
-
-**Summary: 11/11 main theorems formalized (100%)**
-
-The appendix lemmas (A.1, A.2) providing sufficient conditions for verifying CFI are not formalized, as they are outside the main proof chain.
 
 ## Logical Structure of the Proof
 
@@ -121,12 +115,6 @@ Basic.lean
                  └─ AtomsArePrime.lean
                       └─ MasterFormula.lean
 ```
-
-## Technical Notes
-
-### Cancellativity Assumption
-
-The formalization uses `CancelCommMonoid` (cancellative commutative monoid) rather than just `CommMonoid`. This assumption is mathematically harmless: factorial monoids are automatically cancellative, so we assume something weaker than what we prove. The assumption simplifies several intermediate proofs that require cancellation before factoriality is established.
 
 ## Building
 
