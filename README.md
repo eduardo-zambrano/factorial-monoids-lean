@@ -106,7 +106,6 @@ The appendix lemmas (A.1, A.2) providing sufficient conditions for verifying CFI
 | `AtomsArePrime.lean` | §8 | Atoms are prime under CFI |
 | `MasterFormula.lean` | §8 | Master formula and factorial structure |
 | `MainTheorem.lean` | §9 | Main theorem (Theorem 9.1) |
-| `CFI_implies_PPP_clean.lean` | §5 | Alternative proof (not used by main chain) |
 
 ### Dependency Chain
 
@@ -128,10 +127,6 @@ Basic.lean
 ### Cancellativity Assumption
 
 The formalization uses `CancelCommMonoid` (cancellative commutative monoid) rather than just `CommMonoid`. This assumption is mathematically harmless: factorial monoids are automatically cancellative, so we assume something weaker than what we prove. The assumption simplifies several intermediate proofs that require cancellation before factoriality is established.
-
-### Alternative Proof Files
-
-`CFI_implies_PPP_clean.lean` provides an alternative direct proof that CFI + PP-D implies PP-P using strong induction. This file is not part of the main proof chain and contains 2 sorries representing ongoing work on a cleaner approach. These do not affect the main theorems.
 
 ## Building
 

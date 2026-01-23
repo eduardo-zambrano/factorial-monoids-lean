@@ -24,3 +24,8 @@ lakefile.olean
 
 # Aristotle output files
 *-output.lean
+
+# Local working files (not for public release)
+MultiplicationProject/CFI_implies_PPP_clean.lean
+MultiplicationProject/paper_being_formalized.tex
+docs/
