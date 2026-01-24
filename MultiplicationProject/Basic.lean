@@ -113,4 +113,119 @@ def BlockwiseDisjoint {M : Type*} [Monoid M] {n : ℕ} (x y : Fin n → M) : Pro
 def PValuation {M : Type*} [CommMonoid M] (p : M) (m : M) : ℕ :=
   sSup {e | p ^ e ∣ m}
 
+/-!
+## Cancellativity implies PP-D
+
+In a reduced atomic cancellative monoid, powers of atoms are automatically distinct.
+This shows that PP-D is a consequence of cancellativity.
+-/
+
+/-- In a reduced commutative monoid, a positive power of an atom is not a unit. -/
+lemma pow_atom_not_unit {M : Type*} [CommMonoid M] (_h_reduced : Reduced M)
+    {p : M} (hp : p ∈ Atoms M) {n : ℕ} (hn : n ≥ 1) : ¬ IsUnit (p ^ n) := by
+  intro h_unit
+  have h_p_unit : IsUnit p := by
+    cases n with
+    | zero => omega
+    | succ k =>
+      rw [pow_succ] at h_unit
+      exact isUnit_of_mul_isUnit_right h_unit
+  exact hp.not_isUnit h_p_unit
+
+/-- Cancellativity implies PP-D: In a reduced cancellative monoid, powers of atoms are distinct.
+
+    Proof: Suppose p^a = p^b with a < b. Then p^a · 1 = p^a = p^b = p^a · p^{b-a}.
+    By left cancellation, 1 = p^{b-a}. Since b > a, p^{b-a} is a positive power of an atom,
+    hence not a unit in a reduced monoid. But 1 is a unit, contradiction. So a = b. -/
+theorem cancellativity_implies_PP_D {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) : PP_D M := by
+  intro p hp a b hab
+  simp only at hab
+  by_contra h_neq
+  have h_lt : a < b ∨ b < a := Nat.lt_or_gt_of_ne h_neq
+  rcases h_lt with h_lt | h_lt
+  · -- Case a < b
+    have hd : b - a ≥ 1 := by omega
+    have hd_eq : b = a + (b - a) := by omega
+    have h_expand : p ^ a = p ^ a * p ^ (b - a) := by
+      conv_lhs => rw [hab, hd_eq, pow_add]
+    have h_one : (1 : M) = p ^ (b - a) := by
+      have h1 : p ^ a * 1 = p ^ a * p ^ (b - a) := by rw [mul_one]; exact h_expand
+      exact mul_left_cancel h1
+    exact absurd (h_one ▸ isUnit_one) (pow_atom_not_unit h_reduced hp hd)
+  · -- Case b < a (symmetric)
+    have hd : a - b ≥ 1 := by omega
+    have hd_eq : a = b + (a - b) := by omega
+    have h_expand : p ^ b = p ^ b * p ^ (a - b) := by
+      conv_lhs => rw [hab.symm, hd_eq, pow_add]
+    have h_one : (1 : M) = p ^ (a - b) := by
+      have h1 : p ^ b * 1 = p ^ b * p ^ (a - b) := by rw [mul_one]; exact h_expand
+      exact mul_left_cancel h1
+    exact absurd (h_one ▸ isUnit_one) (pow_atom_not_unit h_reduced hp hd)
+
+/-- In a reduced atomic commutative monoid, Factorial implies left cancellation. -/
+lemma Factorial_implies_mul_left_cancel {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_factorial : Factorial M)
+    {a b c : M} (h : a * b = a * c) : b = c := by
+  -- If a is a unit, then a = 1 (reduced), so b = c trivially
+  by_cases ha : IsUnit a
+  · rw [h_reduced a ha, one_mul, one_mul] at h; exact h
+  -- Get factorization of a
+  obtain ⟨sa, hsa_atoms, hsa_prod⟩ := h_atomic a ha
+  -- Handle cases for b and c
+  by_cases hb : IsUnit b <;> by_cases hc : IsUnit c
+  · -- Both b and c are units (= 1)
+    rw [h_reduced b hb, h_reduced c hc]
+  · -- b is a unit, c is not: a * 1 = a * c implies c's atoms are empty, contradiction
+    rw [h_reduced b hb, mul_one] at h
+    obtain ⟨sc, hsc_atoms, hsc_prod⟩ := h_atomic c hc
+    -- Factorizations: a has sa, a*c has sa + sc
+    have hac_not_unit : ¬IsUnit (a * c) := fun h' => hc (isUnit_of_mul_isUnit_right h')
+    have ha_fact : sa.prod = a := hsa_prod
+    have hac_fact : (sa + sc).prod = a * c := by rw [Multiset.prod_add, hsa_prod, hsc_prod]
+    -- By unique factorization of a = a * c
+    obtain ⟨s_uniq, ⟨hs_atoms, hs_prod⟩, h_unique⟩ := h_factorial a ha
+    have h1 : sa = s_uniq := h_unique sa ⟨hsa_atoms, hsa_prod⟩
+    have h2 : sa + sc = s_uniq := h_unique (sa + sc) ⟨fun p hp =>
+      (Multiset.mem_add.mp hp).elim (hsa_atoms p) (hsc_atoms p), by rw [hac_fact, ← h]⟩
+    -- sa = sa + sc implies sc = 0, but sc is nonempty since c is not a unit
+    have : sc = 0 := by simpa [h1] using h2.symm
+    simp [this] at hsc_prod
+    exact absurd (hsc_prod ▸ isUnit_one) hc
+  · -- b is not a unit, c is a unit: symmetric case
+    rw [h_reduced c hc, mul_one] at h
+    obtain ⟨sb, hsb_atoms, hsb_prod⟩ := h_atomic b hb
+    have hab_not_unit : ¬IsUnit (a * b) := fun h' => hb (isUnit_of_mul_isUnit_right h')
+    have hab_fact : (sa + sb).prod = a * b := by rw [Multiset.prod_add, hsa_prod, hsb_prod]
+    obtain ⟨s_uniq, ⟨hs_atoms, hs_prod⟩, h_unique⟩ := h_factorial a ha
+    have h1 : sa = s_uniq := h_unique sa ⟨hsa_atoms, hsa_prod⟩
+    have h2 : sa + sb = s_uniq := h_unique (sa + sb) ⟨fun p hp =>
+      (Multiset.mem_add.mp hp).elim (hsa_atoms p) (hsb_atoms p), by rw [hab_fact, h]⟩
+    have : sb = 0 := by simpa [h1] using h2.symm
+    simp [this] at hsb_prod
+    exact absurd (hsb_prod ▸ isUnit_one) hb
+  · -- Both b and c are non-units: use unique factorization
+    have hab_not_unit : ¬IsUnit (a * b) := fun h' => hb (isUnit_of_mul_isUnit_right h')
+    obtain ⟨sb, hsb_atoms, hsb_prod⟩ := h_atomic b hb
+    obtain ⟨sc, hsc_atoms, hsc_prod⟩ := h_atomic c hc
+    have hab_fact : (sa + sb).prod = a * b := by rw [Multiset.prod_add, hsa_prod, hsb_prod]
+    have hac_fact : (sa + sc).prod = a * c := by rw [Multiset.prod_add, hsa_prod, hsc_prod]
+    have h_eq_multiset : sa + sb = sa + sc := by
+      have hsab_atoms : ∀ p ∈ sa + sb, Irreducible p := fun p hp =>
+        (Multiset.mem_add.mp hp).elim (hsa_atoms p) (hsb_atoms p)
+      have hsac_atoms : ∀ p ∈ sa + sc, Irreducible p := fun p hp =>
+        (Multiset.mem_add.mp hp).elim (hsa_atoms p) (hsc_atoms p)
+      obtain ⟨s_uniq, ⟨_, _⟩, h_unique⟩ := h_factorial (a * b) hab_not_unit
+      have h1 : sa + sb = s_uniq := h_unique (sa + sb) ⟨hsab_atoms, hab_fact⟩
+      have h2 : sa + sc = s_uniq := h_unique (sa + sc) ⟨hsac_atoms, by rw [hac_fact, ← h]⟩
+      rw [h1, ← h2]
+    rw [← hsb_prod, ← hsc_prod, Multiset.add_right_inj.mp h_eq_multiset]
+
+/-- In a reduced atomic commutative monoid, Factorial implies right cancellation. -/
+lemma Factorial_implies_mul_right_cancel {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_factorial : Factorial M)
+    {a b c : M} (h : b * a = c * a) : b = c := by
+  rw [mul_comm b a, mul_comm c a] at h
+  exact Factorial_implies_mul_left_cancel h_reduced h_atomic h_factorial h
+
 end

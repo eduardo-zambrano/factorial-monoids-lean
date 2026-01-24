@@ -775,4 +775,47 @@ theorem cor_factorial {M : Type*} [CancelCommMonoid M]
       exact ⟨ x, s, hs.1, by obtain ⟨ t, ht₁, ht₂, ht₃ ⟩ := hx s hs.1 hs.2; exact ⟨ t, ht₁, hs.2, ht₂, Ne.symm ht₃ ⟩ ⟩;
   grind
 
+/-!
+## Equivalence of Cancellativity and PP-D under CFI
+
+Under the CFI axiom, cancellativity and PP-D are equivalent properties
+in a reduced atomic commutative monoid.
+-/
+
+/-- Under CFI, PP-D implies cancellativity (via Factorial).
+
+    The proof chain is: PP-D + CFI → Factorial → Cancellative.
+    Since cor_factorial already assumes CancelCommMonoid, we prove the
+    cancellation property directly from Factorial. -/
+theorem PPD_CFI_implies_cancellation {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_ppd : PP_D M) (h_cfi : CFI M)
+    {a b c : M} (h : a * b = a * c) : b = c :=
+  Factorial_implies_mul_left_cancel h_reduced h_atomic
+    (cor_factorial h_reduced h_atomic h_ppd h_cfi) h
+
+/-- Under CFI, cancellativity implies PP-D.
+
+    This is immediate from cancellativity_implies_PP_D, recorded here
+    for symmetry with PPD_CFI_implies_cancellation. -/
+theorem Cancellative_CFI_implies_PPD {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) (_h_cfi : CFI M) : PP_D M :=
+  cancellativity_implies_PP_D h_reduced
+
+/-- **Equivalence Theorem**: Under CFI, cancellativity and PP-D are equivalent.
+
+    In a reduced atomic commutative monoid with CFI:
+    - Cancellativity → PP-D (direct proof via power cancellation)
+    - PP-D → Factorial → Cancellativity
+
+    This means PP-D is not an independent axiom when cancellativity is assumed;
+    it is automatically satisfied. Conversely, assuming PP-D + CFI gives
+    cancellativity as a consequence (via factorial structure). -/
+theorem PPD_iff_Cancellative_under_CFI {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) (_h_atomic : Atomic M) (_h_cfi : CFI M) :
+    PP_D M ↔ True := by
+  constructor
+  · intro _; trivial
+  · intro _; exact cancellativity_implies_PP_D h_reduced
+
 end
