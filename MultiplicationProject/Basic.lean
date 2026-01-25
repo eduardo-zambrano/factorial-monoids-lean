@@ -61,18 +61,26 @@ def Support {M : Type*} [Monoid M] (m : M) : Set M :=
   { p ∈ Atoms M | p ∣ m }
 
 /-!
-## The Three Axioms
+## Derived Properties and Axioms
 
-These axioms characterize when a reduced atomic commutative monoid is factorial.
+In a reduced cancellative atomic commutative monoid:
+- **PP-D** (powers distinct) is derived from cancellativity (see `cancellativity_implies_PP_D`)
+- **PP-P** (prime powers factorially closed) is derived from CFI (see `Prop_CFI_implies_PPP` in LocalPurity.lean)
+
+The two axioms that characterize factorial monoids are:
+- **CFI**: Coprime parts factor independently
+- **CPL**: Coprime tuples come in every length
 -/
 
-/-- **Axiom PP-D**: Powers of atoms are distinct.
-    For every atom p, the map e ↦ p^e is injective. -/
+/-- **Property PP-D**: Powers of atoms are distinct.
+    For every atom p, the map e ↦ p^e is injective.
+    This is derived from cancellativity (Proposition 3.1 in the paper). -/
 def PP_D (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, Function.Injective (fun (e : ℕ) => p ^ e)
 
 /-- **Property PP-P**: Prime powers are factorially closed.
-    For every atom p, if x * y is a power of p, then x and y are powers of p. -/
+    For every atom p, if x * y is a power of p, then x and y are powers of p.
+    This is derived from CFI (Proposition 5.3 in the paper). -/
 def PP_P (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, ∀ x y : M, x * y ∈ Submonoid.powers p →
     x ∈ Submonoid.powers p ∧ y ∈ Submonoid.powers p
