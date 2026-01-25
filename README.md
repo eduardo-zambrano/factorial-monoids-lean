@@ -13,7 +13,7 @@ theorem thm_main {M : Type*} [CancelCommMonoid M]
     Factorial M ∧ Set.Infinite (Atoms M)
 ```
 
-Under axioms PP-D (powers distinct), CFI (coprime parts factor independently), and CPL (coprime products exist at every level), a reduced atomic cancellative commutative monoid M is factorial with infinitely many atoms, hence isomorphic to (ℕ, ×).
+Under axioms CFI (coprime parts factor independently) and CPL (coprime products exist at every level), a reduced atomic cancellative commutative monoid M is factorial with infinitely many atoms, hence isomorphic to (ℕ, ×). The property PP-D (powers of atoms are distinct) is automatically satisfied by cancellativity.
 
 ### Master Counting Formula (Theorem 8.2)
 
@@ -33,6 +33,8 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 
 | Paper Ref | Name | Lean Name | Status |
 |-----------|------|-----------|--------|
+| **§3 Axioms** |
+| Prop 3.1 | Cancellativity ⟹ PP-D | `cancellativity_implies_PP_D` | ✅ |
 | **§5 Local Purity** |
 | Prop 5.3 | CFI ⟹ PP-P | `Prop_CFI_implies_PPP` | ✅ |
 | **§6 Local Characterization** |
@@ -52,46 +54,53 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 | — | Atoms infinite under CPL | `atoms_infinite_of_CPL` | ✅ |
 | — | Atoms are prime under CFI | `atoms_are_prime` | ✅ |
 
+**Summary: 12/12 main theorems formalized (100%)**
+
+The appendix lemmas (A.1, A.2) providing sufficient conditions for verifying CFI are not formalized, as they are outside the main proof chain.
+
 ## Logical Structure of the Proof
 
 ```
-                                    AXIOMS
-              ┌───────────────────────┼───────────────────────┐
-              │                       │                       │
-            PP-D                     CFI                     CPL
-              │                       │                       │
-              │     ┌─────────────────┼───────────────┐       │
-              │     │                 │               │       │
-              │     ▼                 │               ▼       │
-              │   Prop_CFI_implies_PPP│       atoms_are_prime │
-              │   (Prop 5.3)          │                       │
-              │     │                 │               │       │
-              │     ▼                 │               │       │
-              │   PP-P                │               │       │
-              │     │                 │               │       │
-              └─────┴────────┬────────┴───────────────┘       │
-                             │                                │
-                             ▼                                │
-                    prop_val_additive                         │
-                    (Prop 8.3)                                │
-                             │                                │
-                             ▼                                ▼
-                      cor_factorial              atoms_infinite_of_CPL
-                      (Corollary 8.4)
-                             │                                │
-                             └───────────────┬────────────────┘
-                                             │
-                                             ▼
-                                         thm_main
-                                       (Theorem 9.1)
-                                        M ≅ (ℕ, ×)
+    ASSUMPTION                         AXIOMS
+         │                    ┌───────────┴───────────┐
+         │                    │                       │
+  Cancellativity             CFI                     CPL
+         │                    │                       │
+         ▼                    │                       │
+       PP-D                   │                       │
+    (Prop 3.1)                │                       │
+         │     ┌──────────────┼───────────────┐       │
+         │     │              │               │       │
+         │     ▼              │               ▼       │
+         │   Prop_CFI_implies_PPP     atoms_are_prime │
+         │   (Prop 5.3)                               │
+         │     │                              │       │
+         │     ▼                              │       │
+         │   PP-P                             │       │
+         │     │                              │       │
+         └─────┴───────┬──────────────────────┘       │
+                       │                              │
+                       ▼                              │
+              prop_val_additive                       │
+              (Prop 8.3)                              │
+                       │                              │
+                       ▼                              ▼
+                cor_factorial          atoms_infinite_of_CPL
+                (Corollary 8.4)
+                       │                              │
+                       └──────────────┬───────────────┘
+                                      │
+                                      ▼
+                                  thm_main
+                                (Theorem 9.1)
+                                 M ≅ (ℕ, ×)
 ```
 
 ## File Structure
 
 | File | Paper Section | Description |
 |------|---------------|-------------|
-| `Basic.lean` | §2-3 | Core definitions and axioms |
+| `Basic.lean` | §2-3 | Core definitions, axioms, and PP-D derivation |
 | `Utilities.lean` | — | Transfer lemmas for monoid isomorphisms |
 | `AtomDvdPower.lean` | §5 | Key lemma: atom dividing p^k equals p |
 | `LocalPurity.lean` | §5 | CFI implies PP-P (Proposition 5.3) |
@@ -115,6 +124,14 @@ Basic.lean
                  └─ AtomsArePrime.lean
                       └─ MasterFormula.lean
 ```
+
+## Technical Notes
+
+### Cancellativity Assumption
+
+The formalization uses `CancelCommMonoid` (cancellative commutative monoid) rather than just `CommMonoid`. This assumption is mathematically harmless: factorial monoids are automatically cancellative, so we assume something weaker than what we prove.
+
+**Key insight**: Cancellativity implies PP-D (Proposition 3.1). In a reduced cancellative atomic monoid, if p^a = p^b with a < b, then p^a · 1 = p^a · p^{b-a}, so by cancellativity 1 = p^{b-a}. But this contradicts reducedness since p^{b-a} is a positive power of an atom. Therefore the paper presents only **two axioms** (CFI and CPL), with PP-D as a derived property.
 
 ## Building
 
