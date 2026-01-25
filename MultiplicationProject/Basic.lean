@@ -211,6 +211,15 @@ lemma distinct_atom_not_dvd_power_APD {M : Type*} [CommMonoid M]
     exact power_coprime_of_not_in_support_APD h_reduced h_apd hp h_not_in_supp k
   exact h_coprime_pow q hq h_div (dvd_refl q)
 
+/-- Distinct atoms don't divide each other (immediate from APD with k=1). -/
+lemma distinct_atoms_not_dvd {M : Type*} [CommMonoid M]
+    (h_apd : APD M) {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (h_neq : p ≠ q) :
+    ¬ p ∣ q := by
+  intro h
+  have h1 : p ∣ q ^ 1 := by simp [h]
+  have h2 : p = q := h_apd q p hq hp 1 h1
+  exact h_neq h2
+
 /-!
 ## Helper Definitions
 -/
