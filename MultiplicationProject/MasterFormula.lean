@@ -8,33 +8,32 @@ This project request had uuid: 36c1ae2c-65d8-4ea9-90b8-5257e8ea4853
 To cite Aristotle, tag @Aristotle-Harmonic on GitHub PRs/issues, and add as co-author to commits:
 Co-authored-by: Aristotle (Harmonic) <aristotle-harmonic@harmonic.fun>
 
-The following was proved by Aristotle:
+The following was proved by Aristotle (updated for System B / APD-based approach):
 
-- theorem cor_squarefree {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M)
-    (h_atomic : Atomic M)
+- theorem cor_squarefree {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M)
     (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
     (h_cfi : CFI M)
     {k : ℕ} (hk : k ≥ 1)
     (L : List M) (h_atoms : ∀ p ∈ L, p ∈ Atoms M) (h_nodup : L.Nodup) :
     LabeledFactorizationCount k L.prod = k ^ L.length
 
-- theorem thm_master {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M)
+- theorem thm_master {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M)
     (h_ppd : PP_D M) (h_cfi : CFI M)
     (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
     (m : M) (k : ℕ) (hk : k ≥ 1) :
     ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
       LabeledFactorizationCount k m = S.prod (fun p => Nat.choose (PValuation p m + k - 1) (k - 1))
 
-- theorem prop_val_additive {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M)
+- theorem prop_val_additive {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M)
     (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (x y : M) :
     PValuation p (x * y) = PValuation p x + PValuation p y
 
-- theorem cor_factorial {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M)
+- theorem cor_factorial {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M)
     (h_ppd : PP_D M) (h_cfi : CFI M) :
     Factorial M
 
@@ -79,7 +78,7 @@ noncomputable section
 -/
 
 /-- If p and q are atoms, and p^k divides q, then k ≤ 1. -/
-lemma lemma_pow_dvd_atom {M : Type*} [CancelCommMonoid M] (_h_red : Reduced M)
+lemma lemma_pow_dvd_atom {M : Type*} [CommMonoid M] (_h_red : Reduced M)
     (p q : M) (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (k : ℕ) (h_dvd : p ^ k ∣ q) :
     k ≤ 1 := by
   unfold Atoms at hq
@@ -94,7 +93,7 @@ lemma lemma_pow_dvd_atom {M : Type*} [CancelCommMonoid M] (_h_red : Reduced M)
     · exact hp.1 right_1
 
 /-- If an atom q divides a power of an atom p, then q = p. -/
-lemma lemma_atom_dvd_pow {M : Type*} [CancelCommMonoid M] (_h_red : Reduced M) (h_ppp : PP_P M)
+lemma lemma_atom_dvd_pow {M : Type*} [CommMonoid M] (_h_red : Reduced M) (h_ppp : PP_P M)
     (p q : M) (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (k : ℕ) (h_dvd : q ∣ p ^ k) :
     q = p := by
   obtain ⟨x, hx⟩ : ∃ x, p^k = q * x := h_dvd
@@ -115,7 +114,7 @@ lemma lemma_atom_dvd_pow {M : Type*} [CancelCommMonoid M] (_h_red : Reduced M) (
 -/
 
 /-- Recurrence relation: F_{k+1}(m) = ∑_{(u,v) ∈ F_2(m)} F_k(v). -/
-lemma count_recurrence {M : Type*} [CancelCommMonoid M] (k : ℕ) (m : M)
+lemma count_recurrence {M : Type*} [CommMonoid M] (k : ℕ) (m : M)
     (h_finite_2 : (LabeledFactorizations 2 m).Finite)
     (h_finite_k : ∀ f ∈ LabeledFactorizations 2 m, (LabeledFactorizations k (f 1)).Finite) :
     LabeledFactorizationCount (k + 1) m = ∑ f ∈ h_finite_2.toFinset, LabeledFactorizationCount k (f 1) := by
@@ -159,7 +158,7 @@ lemma count_recurrence {M : Type*} [CancelCommMonoid M] (k : ℕ) (m : M)
   · norm_num +zetaDelta at *
 
 /-- Sum reindexing lemma using CFI bijection. -/
-lemma sum_split_by_CFI {M : Type*} [CancelCommMonoid M]
+lemma sum_split_by_CFI {M : Type*} [CommMonoid M]
     (h_cfi : ∀ x y : M, AreCoprime x y → Function.Bijective
       (fun (p : LabeledFactorizations 2 x × LabeledFactorizations 2 y) => labeledFactorizationMul p.1 p.2))
     (h_finite : ∀ (n : ℕ) (z : M), (LabeledFactorizations n z).Finite)
@@ -200,9 +199,10 @@ Now using the PROVEN atoms_are_prime from AtomsArePrime_v2_aristotle.lean!
     where ω(m) is the number of distinct prime factors.
 
     Proof: F_k(p) = k for each atom, and coprime multiplicativity gives the product. -/
-theorem cor_squarefree {M : Type*} [CancelCommMonoid M]
+theorem cor_squarefree {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M)
     (h_atomic : Atomic M)
+    (h_apd : APD M)
     (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
     (h_cfi : CFI M)
     {k : ℕ} (hk : k ≥ 1)
@@ -210,7 +210,7 @@ theorem cor_squarefree {M : Type*} [CancelCommMonoid M]
     LabeledFactorizationCount k L.prod = k ^ L.length := by
   -- Now we can use the proven atoms_are_prime!
   have h_prime : ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b :=
-    atoms_are_prime h_reduced h_atomic h_cfi
+    atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi
   -- The rest of the proof uses coprime multiplicativity and induction on L
   induction' L with p L ih generalizing k;
   · simp +decide [ LabeledFactorizationCount ];
@@ -267,7 +267,7 @@ noncomputable section AristotleLemmas
 /-
 Powers of distinct atoms are coprime.
 -/
-lemma coprime_powers_of_distinct_atoms {M : Type*} [CancelCommMonoid M]
+lemma coprime_powers_of_distinct_atoms {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_ppp : PP_P M)
     {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (h_neq : p ≠ q) (a b : ℕ) :
     AreCoprime (p ^ a) (q ^ b) := by
@@ -280,8 +280,8 @@ lemma coprime_powers_of_distinct_atoms {M : Type*} [CancelCommMonoid M]
 /-
 If x is coprime to each element in a finset product, it is coprime to the product.
 -/
-lemma AreCoprime_finset_prod_right {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
+lemma AreCoprime_finset_prod_right {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_cfi : CFI M)
     {x : M} {ι : Type*} {S : Finset ι} {g : ι → M}
     (h_coprime : ∀ i ∈ S, AreCoprime x (g i)) :
     AreCoprime x (S.prod g) := by
@@ -290,13 +290,13 @@ lemma AreCoprime_finset_prod_right {M : Type*} [CancelCommMonoid M]
       · have := h_coprime i ( Finset.mem_insert_self _ _ );
         have := ih ( fun j hj => h_coprime j ( Finset.mem_insert_of_mem hj ) );
         rw [ AreCoprime_symm ] at *;
-        have := AreCoprime_mul_of_prime_atoms ( atoms_are_prime h_reduced h_atomic h_cfi ) ‹AreCoprime ( g i ) x› ‹AreCoprime ( S.prod g ) x›; aesop;
+        have := AreCoprime_mul_of_prime_atoms ( atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi ) ‹AreCoprime ( g i ) x› ‹AreCoprime ( S.prod g ) x›; aesop;
 
 /-
 Factorization counts are multiplicative over coprime finset products.
 -/
-lemma count_finset_prod_of_coprime {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
+lemma count_finset_prod_of_coprime {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_cfi : CFI M)
     (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
     {k : ℕ} (hk : k ≥ 1)
     {ι : Type*} (S : Finset ι) (g : ι → M)
@@ -329,7 +329,7 @@ noncomputable section AristotleLemmas
 /-
 If p is an atom coprime to u, then any power of p is coprime to u.
 -/
-lemma AreCoprime_pow_left {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (h_ppp : PP_P M)
+lemma AreCoprime_pow_left {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_ppp : PP_P M)
     (p : M) (hp : p ∈ Atoms M) (k : ℕ) (u : M) (h : AreCoprime p u) :
     AreCoprime (p ^ k) u := by
       rcases k with ( _ | k ) <;> simp_all +decide [ pow_succ', AreCoprime ];
@@ -352,7 +352,7 @@ lemma associated_eq_of_reduced {M : Type*} [Monoid M] (h_reduced : Reduced M)
 /-
 p^(k+1) cannot divide p^k in a reduced monoid with PP-D and PP-P.
 -/
-lemma pow_succ_dvd_pow_impossible {M : Type*} [CancelCommMonoid M] (_h_reduced : Reduced M) (h_ppd : PP_D M) (h_ppp : PP_P M)
+lemma pow_succ_dvd_pow_impossible {M : Type*} [CommMonoid M] (_h_reduced : Reduced M) (h_ppd : PP_D M) (h_ppp : PP_P M)
     (p : M) (hp : p ∈ Atoms M) (k : ℕ) : ¬ (p ^ (k + 1) ∣ p ^ k) := by
       -- Assume that $p^{k+1} \mid p^k$. Then there exists some $y$ such that $p^k = p^{k+1} \cdot y$.
       by_contra h_div
@@ -373,8 +373,8 @@ lemma pow_succ_dvd_pow_impossible {M : Type*} [CancelCommMonoid M] (_h_reduced :
 /-
 Cancellation property for powers of atoms: if p^(k+1) divides p^k * u, then p divides u.
 -/
-lemma atom_dvd_cancel {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma atom_dvd_cancel {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (k : ℕ) (u : M) (h : p ^ (k + 1) ∣ p ^ k * u) :
     p ∣ u := by
       -- Assume for contradiction that ¬ p ∣ u.
@@ -398,13 +398,13 @@ lemma atom_dvd_cancel {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (
             simp only [Support, Set.mem_setOf_eq, not_and]
             intro _ h_dvd
             exact h_coprime p hp (dvd_refl p) h_dvd
-          exact power_coprime_of_not_in_support h_reduced h_atomic h_cfi hp h_not_in_supp k;
+          exact power_coprime_of_not_in_support_APD h_reduced h_apd hp h_not_in_supp k;
       -- By `h_ppp`, `c` is a power of `p`.
       obtain ⟨l, hl⟩ : ∃ l : ℕ, c = p ^ l := by
         have h_c_power : c ∈ Submonoid.powers p := by
           have h_c_div : c ∣ p ^ (k + 1) := by
             exact hac ▸ dvd_mul_left _ _
-          have := Prop_CFI_implies_PPP h_reduced h_atomic h_cfi;
+          have := APD_implies_PPP h_reduced h_atomic h_apd;
           have := this p hp;
           obtain ⟨ x, hx ⟩ := h_c_div;
           exact this _ _ ( hx ▸ Submonoid.pow_mem _ ( Submonoid.mem_powers _ ) _ ) |>.1;
@@ -418,7 +418,7 @@ lemma atom_dvd_cancel {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (
               simp only [Support, Set.mem_setOf_eq, not_and]
               intro _ h_dvd
               exact h_coprime p hp (dvd_refl p) h_dvd
-            exact power_coprime_of_not_in_support h_reduced h_atomic h_cfi hp h_not_in_supp l;
+            exact power_coprime_of_not_in_support_APD h_reduced h_apd hp h_not_in_supp l;
           aesop;
         have hc_unit : c ∣ u := by
           exact hcd ▸ dvd_mul_right _ _;
@@ -432,12 +432,12 @@ lemma atom_dvd_cancel {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (
       -- Since $a = p^{k+1}$ and $a * b = p^k$, we have $p^{k+1} * b = p^k$, which implies $p^{k+1} \mid p^k$.
       have h_div : p ^ (k + 1) ∣ p ^ k := by
         exact ⟨ b, by rw [ ← hac, hc_one, mul_one, hab ] ⟩;
-      exact pow_succ_dvd_pow_impossible h_reduced h_ppd ( Prop_CFI_implies_PPP h_reduced h_atomic h_cfi ) p hp k h_div
+      exact pow_succ_dvd_pow_impossible h_reduced h_ppd ( APD_implies_PPP h_reduced h_atomic h_apd ) p hp k h_div
 
 /-
 p does not divide the product of atoms distinct from p.
 -/
-lemma not_dvd_filter_prod {M : Type*} [CancelCommMonoid M] [DecidableEq M] (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
+lemma not_dvd_filter_prod {M : Type*} [CommMonoid M] [DecidableEq M] (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (L : List M) (hL : ∀ q ∈ L, q ∈ Atoms M) :
     ¬ p ∣ (L.filter (· ≠ p)).prod := by
       by_contra h;
@@ -445,15 +445,15 @@ lemma not_dvd_filter_prod {M : Type*} [CancelCommMonoid M] [DecidableEq M] (h_re
       have h_ind : ∀ {L : List M}, (∀ q ∈ L, q ∈ Atoms M ∧ q ≠ p) → ¬p ∣ L.prod := by
         intro L hL; induction' L with q L ih <;> simp_all +decide;
         · exact fun h => hp.1 ( isUnit_of_dvd_one h );
-        · have := atoms_are_prime h_reduced h_atomic h_cfi p hp q (L.prod);
+        · have := atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi p hp q (L.prod);
           exact fun h => absurd ( this h ) ( by rintro ( h | h ) <;> [ exact hL.1.2 ( by have := coprime_of_distinct_atoms h_reduced hp hL.1.1; aesop ) ; exact ih h ] );
       exact h_ind ( by aesop ) h
 
 /-
 If p^(k+n) divides p^k * u, then p^n divides u.
 -/
-lemma lemma_pow_dvd_diff {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma lemma_pow_dvd_diff {M : Type*} [CommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (k n : ℕ) (u : M) (h : p ^ (k + n) ∣ p ^ k * u) :
     p ^ n ∣ u := by
       have h_ind : ∀ (k n : ℕ) (u : M), p ^ (k + n) ∣ p ^ k * u → p ^ n ∣ u := by
@@ -462,7 +462,7 @@ lemma lemma_pow_dvd_diff {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M
         · simp +decide;
         · -- Apply `atom_dvd_cancel` (with exponent `k+n`) to `p^(k+n+1) ∣ p^k * u`.
           have h_cancel : p ∣ u := by
-            apply atom_dvd_cancel h_reduced h_atomic h_ppd h_cfi p hp k u (by
+            apply atom_dvd_cancel h_reduced h_atomic h_apd h_ppd h_cfi p hp k u (by
             exact dvd_trans ( pow_dvd_pow _ ( by linarith ) ) h_div);
           -- Substitute $u = p * v$ into the hypothesis $p^{k+n+1} \mid p^k * u$.
           obtain ⟨v, rfl⟩ : ∃ v, u = p * v := h_cancel;
@@ -473,8 +473,8 @@ lemma lemma_pow_dvd_diff {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M
 /-
 If p^k divides the product of a multiset of atoms, then k is at most the count of p in the multiset.
 -/
-lemma lemma_pow_dvd_multiset_prod {M : Type*} [CancelCommMonoid M] [DecidableEq M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma lemma_pow_dvd_multiset_prod {M : Type*} [CommMonoid M] [DecidableEq M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (s : Multiset M) (hs : ∀ a ∈ s, a ∈ Atoms M)
     (k : ℕ) (h : p ^ k ∣ s.prod) :
     k <= s.count p := by
@@ -502,11 +502,12 @@ lemma lemma_pow_dvd_multiset_prod {M : Type*} [CancelCommMonoid M] [DecidableEq 
                   rw [ Multiset.mem_replicate ] ; aesop;
                 conv_lhs => rw [ h_div, Multiset.prod_add, Multiset.prod_replicate ] ;
               exact h_div ▸ h_contra;
-            exact?;
+            exact atom_dvd_cancel h_reduced h_atomic h_apd h_ppd h_cfi p hp (Multiset.count p t)
+                  (Multiset.filter (fun x => x ≠ p) t).prod h_div
           -- Apply the lemma not_dvd_filter_prod to get that p does not divide the product of the elements in t that are not equal to p.
           have h_not_div : ¬p ∣ (t.filter (· ≠ p)).prod := by
             have h_not_div : ∀ {L : List M}, (∀ q ∈ L, q ∈ Atoms M) → ¬p ∣ List.prod (List.filter (· ≠ p) L) := by
-              exact?;
+              exact fun {L} a => not_dvd_filter_prod h_reduced h_atomic h_apd h_cfi p hp L a
             convert h_not_div ( show ∀ q ∈ t.toList, q ∈ Atoms M from fun q hq => ht q <| Multiset.mem_toList.mp hq ) using 1;
             conv => rw [ ← Multiset.coe_toList t ] ;
             norm_num +zetaDelta at *;
@@ -517,8 +518,8 @@ lemma lemma_pow_dvd_multiset_prod {M : Type*} [CancelCommMonoid M] [DecidableEq 
 /-
 The set of exponents e such that p^e divides m is bounded above.
 -/
-lemma lemma_valuation_bounded {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma lemma_valuation_bounded {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (m : M) :
     BddAbove {e | p ^ e ∣ m} := by
       by_contra h_unbounded;
@@ -535,30 +536,30 @@ lemma lemma_valuation_bounded {M : Type*} [CancelCommMonoid M]
       obtain ⟨s, hs⟩ : ∃ s : Multiset M, (∀ a ∈ s, a ∈ Atoms M) ∧ m = s.prod := by
         have := h_atomic m h_not_unit;
         obtain ⟨ s, hs₁, hs₂ ⟩ := this; use s; aesop;
-      exact h_unbounded ⟨ s.count p, fun e he => lemma_pow_dvd_multiset_prod h_reduced h_atomic h_ppd h_cfi p hp s hs.1 e ( by simpa only [ hs.2 ] using he ) ⟩
+      exact h_unbounded ⟨ s.count p, fun e he => lemma_pow_dvd_multiset_prod h_reduced h_atomic h_apd h_ppd h_cfi p hp s hs.1 e ( by simpa only [ hs.2 ] using he ) ⟩
 
 /-
 The valuation v_p(m) satisfies p^v | m and p^(v+1) does not divide m.
 -/
-lemma lemma_valuation_spec {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma lemma_valuation_spec {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (m : M) :
     p ^ (PValuation p m) ∣ m ∧ ¬ p ^ (PValuation p m + 1) ∣ m := by
       constructor;
-      · have := lemma_valuation_bounded h_reduced h_atomic h_ppd h_cfi p hp m;
+      · have := lemma_valuation_bounded h_reduced h_atomic h_apd h_ppd h_cfi p hp m;
         have := Nat.sSup_mem ( show { e : ℕ | p ^ e ∣ m }.Nonempty from ⟨ 0, by simp +decide ⟩ ) ; aesop;
-      · exact fun h => not_le_of_gt ( Nat.lt_succ_self _ ) ( le_csSup ( lemma_valuation_bounded h_reduced h_atomic h_ppd h_cfi p hp m ) h )
+      · exact fun h => not_le_of_gt ( Nat.lt_succ_self _ ) ( le_csSup ( lemma_valuation_bounded h_reduced h_atomic h_apd h_ppd h_cfi p hp m ) h )
 
 /-
 If m = p^k * u and p does not divide u, then v_p(m) = k.
 -/
-lemma valuation_eq_of_decomposition {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma valuation_eq_of_decomposition {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (m : M) (k : ℕ) (u : M) (h_eq : m = p ^ k * u) (h_ndvd : ¬ p ∣ u) :
     PValuation p m = k := by
       -- From Lemma `lemma_valuation_spec`, we know that `p ^ (PValuation p m)` divides `m` and `¬ p ^ (PValuation p m + 1)` divides `m`.
       obtain ⟨h_div, h_not_div⟩ : p ^ (PValuation p m) ∣ m ∧ ¬ p ^ (PValuation p m + 1) ∣ m := by
-        exact?;
+        exact lemma_valuation_spec h_reduced h_atomic h_apd h_ppd h_cfi p hp m
       -- Since `m = p^k * u`, we have `p^k ∣ m`.
       have h_div_k : p ^ k ∣ m := by
         exact h_eq.symm ▸ dvd_mul_right _ _;
@@ -567,19 +568,19 @@ lemma valuation_eq_of_decomposition {M : Type*} [CancelCommMonoid M]
       · -- Then `p^(k+1) ∣ p^v ∣ m = p^k * u`.
         have h_div_k1 : p ^ (k + 1) ∣ m := by
           exact dvd_trans ( pow_dvd_pow _ hv ) h_div;
-        exact False.elim ( h_ndvd ( atom_dvd_cancel h_reduced h_atomic h_ppd h_cfi p hp k u ( by simpa only [ h_eq ] using h_div_k1 ) ) );
+        exact False.elim ( h_ndvd ( atom_dvd_cancel h_reduced h_atomic h_apd h_ppd h_cfi p hp k u ( by simpa only [ h_eq ] using h_div_k1 ) ) );
       · exact le_antisymm ( le_of_not_gt hv ) ( Nat.le_of_not_lt fun h => h_not_div <| dvd_trans ( pow_dvd_pow _ h ) h_div_k )
 
 end AristotleLemmas
 
-theorem prop_val_additive {M : Type*} [CancelCommMonoid M]
+theorem prop_val_additive {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M)
+    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (p : M) (hp : p ∈ Atoms M) (x y : M) :
     PValuation p (x * y) = PValuation p x + PValuation p y := by
-  have h_ppp : PP_P M := Prop_CFI_implies_PPP h_reduced h_atomic h_cfi
+  have h_ppp : PP_P M := APD_implies_PPP h_reduced h_atomic h_apd
   have h_prime : ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b :=
-    atoms_are_prime h_reduced h_atomic h_cfi
+    atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi
   -- The proof follows the paper:
   -- 1. Write x = p^a * x' and y = p^b * y' where x', y' are p-free
   -- 2. Show v_p(x*y) = a + b using CFI and the fact that atoms are prime
@@ -604,12 +605,12 @@ theorem prop_val_additive {M : Type*} [CancelCommMonoid M]
 
 /-- For a multiset of atoms, the p-valuation of the product equals the count of p.
     This is extracted from the proof of cor_factorial. -/
-lemma PValuation_multiset_prod_eq_count {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+lemma PValuation_multiset_prod_eq_count {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (s : Multiset M) (hs : ∀ a ∈ s, a ∈ Atoms M) (p : M) (hp : p ∈ Atoms M) :
     PValuation p s.prod = Multiset.count p s := by
   have h_prime : ∀ q ∈ Atoms M, ∀ a b : M, q ∣ a * b → q ∣ a ∨ q ∣ b :=
-    atoms_are_prime h_reduced h_atomic h_cfi
+    atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi
   induction' s using Multiset.induction with a s ih generalizing p
   · -- empty case
     simp +decide [PValuation]
@@ -622,7 +623,7 @@ lemma PValuation_multiset_prod_eq_count {M : Type*} [CancelCommMonoid M]
     have ha : a ∈ Atoms M := hs a (Multiset.mem_cons_self a s)
     have hs' : ∀ b ∈ s, b ∈ Atoms M := fun b hb => hs b (Multiset.mem_cons_of_mem hb)
     have h_val_sum : PValuation p (a * s.prod) = PValuation p a + PValuation p s.prod :=
-      prop_val_additive h_reduced h_atomic h_ppd h_cfi p hp a s.prod
+      prop_val_additive h_reduced h_atomic h_apd h_ppd h_cfi p hp a s.prod
     cases eq_or_ne a p <;> simp_all +decide [PValuation]
     · -- a = p case
       rw [add_comm, csSup_eq_of_forall_le_of_forall_lt_exists_gt] <;> norm_num
@@ -646,8 +647,8 @@ lemma PValuation_multiset_prod_eq_count {M : Type*} [CancelCommMonoid M]
     1. By atomicity, m factors into a multiset s of atoms
     2. The product s.prod equals the finset product ∏_{p ∈ s.toFinset} p^{count p s}
     3. By PValuation_multiset_prod_eq_count, count p s = v_p(m) -/
-theorem lem_primewise {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_ppd : PP_D M) (h_cfi : CFI M)
+theorem lem_primewise {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (m : M) (hm : ¬IsUnit m) :
     ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
       m = S.prod (fun p => p ^ PValuation p m) := by
@@ -665,7 +666,7 @@ theorem lem_primewise {M : Type*} [CancelCommMonoid M]
       intro p hp
       have hp_atom : p ∈ Atoms M := hs_atoms p (Multiset.mem_toFinset.mp hp)
       rw [← hs_prod]
-      exact (PValuation_multiset_prod_eq_count h_reduced h_atomic h_ppd h_cfi s hs_atoms p hp_atom).symm
+      exact (PValuation_multiset_prod_eq_count h_reduced h_atomic h_apd h_ppd h_cfi s hs_atoms p hp_atom).symm
     -- Use Finset.prod_multiset_count and substitute
     calc m = s.prod := hs_prod.symm
       _ = ∏ p ∈ s.toFinset, p ^ Multiset.count p s := Finset.prod_multiset_count s
@@ -678,27 +679,27 @@ theorem lem_primewise {M : Type*} [CancelCommMonoid M]
 
     Under (PP-D) and (CFI), for any m ∈ M and k ≥ 1:
     F_k(m) = ∏_{p ∈ P} C(v_p(m) + k - 1, k - 1) -/
-theorem thm_master {M : Type*} [CancelCommMonoid M]
+theorem thm_master {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M)
+    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     (h_finite : ∀ (k : ℕ) (m : M), (LabeledFactorizations k m).Finite)
     (m : M) (k : ℕ) (hk : k ≥ 1) :
     ∃ (S : Finset M), (∀ p ∈ S, p ∈ Atoms M) ∧
       LabeledFactorizationCount k m = S.prod (fun p => Nat.choose (PValuation p m + k - 1) (k - 1)) := by
-  have h_ppp : PP_P M := Prop_CFI_implies_PPP h_reduced h_atomic h_cfi
+  have h_ppp : PP_P M := APD_implies_PPP h_reduced h_atomic h_apd
   have h_prime : ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b :=
-    atoms_are_prime h_reduced h_atomic h_cfi
+    atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi
   -- Apply Lemma 8.1 to find the set S of atoms.
   have hS : ∃ S : Finset M, (∀ p ∈ S, p ∈ Atoms M) ∧ m = S.prod (fun p => p ^ PValuation p m) := by
     by_cases hm : IsUnit m
     · refine' ⟨ ∅, _, _ ⟩ <;> simp_all +decide [ Finset.prod_empty ]
       exact?
-    · exact lem_primewise h_reduced h_atomic h_ppd h_cfi m hm
+    · exact lem_primewise h_reduced h_atomic h_apd h_ppd h_cfi m hm
   -- Apply the multiplicative property of factorization counts over coprime products.
   have h_factorization : LabeledFactorizationCount k m = ∏ p ∈ hS.choose, LabeledFactorizationCount k (p ^ PValuation p m) := by
     have h_factorization : ∀ {S : Finset M} {g : M → M}, (∀ p ∈ S, p ∈ Atoms M) → (∀ p ∈ S, ∀ q ∈ S, p ≠ q → AreCoprime (g p) (g q)) → LabeledFactorizationCount k (S.prod g) = S.prod (fun p => LabeledFactorizationCount k (g p)) := by
       intros S g hg_atoms hg_coprime
-      convert count_finset_prod_of_coprime h_reduced h_atomic h_cfi h_finite hk S g hg_coprime using 1
+      convert count_finset_prod_of_coprime h_reduced h_atomic h_apd h_cfi h_finite hk S g hg_coprime using 1
     convert h_factorization hS.choose_spec.1 ( fun p hp q hq hpq => ?_ ) using 1
     · rw [ ← hS.choose_spec.2 ]
     · exact coprime_powers_of_distinct_atoms h_reduced h_ppp ( hS.choose_spec.1 p hp ) ( hS.choose_spec.1 q hq ) hpq _ _
@@ -709,13 +710,13 @@ theorem thm_master {M : Type*} [CancelCommMonoid M]
 
     Under (PP-D) and (CFI), the monoid M is isomorphic to ⊕_{p ∈ P} ℕ₀,
     and hence is factorial. -/
-theorem cor_factorial {M : Type*} [CancelCommMonoid M]
+theorem cor_factorial {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M) :
+    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M) :
     Factorial M := by
-  have h_ppp : PP_P M := Prop_CFI_implies_PPP h_reduced h_atomic h_cfi
+  have h_ppp : PP_P M := APD_implies_PPP h_reduced h_atomic h_apd
   have h_prime : ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b :=
-    atoms_are_prime h_reduced h_atomic h_cfi
+    atoms_are_prime_APD h_reduced h_atomic h_apd h_cfi
   -- The proof:
   -- 1. By prop_val_additive, each v_p is a monoid homomorphism
   -- 2. The map Φ: m ↦ (v_p(m))_p is a monoid homomorphism to ⊕ℕ₀
@@ -782,40 +783,24 @@ Under the CFI axiom, cancellativity and PP-D are equivalent properties
 in a reduced atomic commutative monoid.
 -/
 
-/-- Under CFI, PP-D implies cancellativity (via Factorial).
+/-- Under APD + PP-D + CFI, the monoid is cancellative (via Factorial).
 
-    The proof chain is: PP-D + CFI → Factorial → Cancellative.
-    Since cor_factorial already assumes CancelCommMonoid, we prove the
-    cancellation property directly from Factorial. -/
-theorem PPD_CFI_implies_cancellation {M : Type*} [CancelCommMonoid M]
+    The proof chain is: APD + PP-D + CFI → Factorial → Cancellative.
+    This is the System B version. -/
+theorem APD_PPD_CFI_implies_cancellation {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_cfi : CFI M)
+    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M)
     {a b c : M} (h : a * b = a * c) : b = c :=
   Factorial_implies_mul_left_cancel h_reduced h_atomic
-    (cor_factorial h_reduced h_atomic h_ppd h_cfi) h
+    (cor_factorial h_reduced h_atomic h_apd h_ppd h_cfi) h
 
-/-- Under CFI, cancellativity implies PP-D.
+/- Note: The following theorems from System A (cancellativity ↔ PP-D under CFI)
+   are not directly applicable in System B, where we assume APD as an independent
+   axiom rather than deriving it from cancellativity.
 
-    This is immediate from cancellativity_implies_PP_D, recorded here
-    for symmetry with PPD_CFI_implies_cancellation. -/
-theorem Cancellative_CFI_implies_PPD {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (_h_cfi : CFI M) : PP_D M :=
-  cancellativity_implies_PP_D h_reduced
-
-/-- **Equivalence Theorem**: Under CFI, cancellativity and PP-D are equivalent.
-
-    In a reduced atomic commutative monoid with CFI:
-    - Cancellativity → PP-D (direct proof via power cancellation)
-    - PP-D → Factorial → Cancellativity
-
-    This means PP-D is not an independent axiom when cancellativity is assumed;
-    it is automatically satisfied. Conversely, assuming PP-D + CFI gives
-    cancellativity as a consequence (via factorial structure). -/
-theorem PPD_iff_Cancellative_under_CFI {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) (_h_atomic : Atomic M) (_h_cfi : CFI M) :
-    PP_D M ↔ True := by
-  constructor
-  · intro _; trivial
-  · intro _; exact cancellativity_implies_PP_D h_reduced
+   In System B:
+   - We assume APD, PP-D, CFI, CPL as four independent axioms
+   - Cancellativity is derived from Factorial (which follows from the axioms)
+   - The relationship to System A is: CancelCommMonoid implies APD (but has sorries) -/
 
 end
