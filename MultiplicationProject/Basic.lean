@@ -61,26 +61,38 @@ def Support {M : Type*} [Monoid M] (m : M) : Set M :=
   { p ∈ Atoms M | p ∣ m }
 
 /-!
-## Derived Properties and Axioms
+## The Four Axioms (System B)
 
-In a reduced cancellative atomic commutative monoid:
-- **PP-D** (powers distinct) is derived from cancellativity (see `cancellativity_implies_PP_D`)
-- **PP-P** (prime powers factorially closed) is derived from CFI (see `Prop_CFI_implies_PPP` in LocalPurity.lean)
+In a reduced atomic commutative monoid, the following four independent axioms
+characterize factorial monoids:
 
-The two axioms that characterize factorial monoids are:
+- **PP-D**: Powers of atoms are distinct (p^a = p^b → a = b)
+- **APD**: Atom-Power-Divisibility (if atom q divides p^k where p is an atom, then q = p)
 - **CFI**: Coprime parts factor independently
 - **CPL**: Coprime tuples come in every length
+
+Key derived properties:
+- **PP-P** (prime powers factorially closed) follows trivially from APD
+- **Cancellativity** follows from Factorial (which follows from the four axioms)
+
+This formulation (System B) uses four independent axioms rather than assuming
+cancellativity and deriving PP-D and APD from it.
 -/
 
-/-- **Property PP-D**: Powers of atoms are distinct.
-    For every atom p, the map e ↦ p^e is injective.
-    This is derived from cancellativity (Proposition 3.1 in the paper). -/
+/-- **Axiom PP-D**: Powers of atoms are distinct.
+    For every atom p, the map e ↦ p^e is injective. -/
 def PP_D (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, Function.Injective (fun (e : ℕ) => p ^ e)
 
-/-- **Property PP-P**: Prime powers are factorially closed.
+/-- **Axiom APD**: Atom-Power-Divisibility.
+    If an atom q divides p^k where p is also an atom, then q = p.
+    This says that prime power submonoids are "pure" - no foreign atoms can divide in. -/
+def APD (M : Type*) [Monoid M] : Prop :=
+  ∀ p q : M, p ∈ Atoms M → q ∈ Atoms M → ∀ k : ℕ, q ∣ p ^ k → q = p
+
+/-- **Derived Property PP-P**: Prime powers are factorially closed.
     For every atom p, if x * y is a power of p, then x and y are powers of p.
-    This is derived from CFI (Proposition 5.3 in the paper). -/
+    This follows trivially from APD (see `APD_implies_PPP`). -/
 def PP_P (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, ∀ x y : M, x * y ∈ Submonoid.powers p →
     x ∈ Submonoid.powers p ∧ y ∈ Submonoid.powers p
@@ -107,6 +119,97 @@ def CFI (M : Type*) [CommMonoid M] : Prop :=
     For every r, there exist r pairwise coprime non-units. -/
 def CPL (M : Type*) [Monoid M] : Prop :=
   ∀ r : ℕ, ∃ (L : List M), L.length = r ∧ (∀ x ∈ L, ¬ IsUnit x) ∧ L.Pairwise AreCoprime
+
+/-!
+## APD implies PP-P
+
+This is the key lemma that makes System B work: APD trivially implies PP-P.
+-/
+
+/-- APD implies PP-P: If atoms can only divide "their own" prime powers,
+    then prime power submonoids are factorially closed.
+
+    Proof: Suppose x * y = p^e. If x is a unit, x = 1 ∈ ⟨p⟩ (reduced).
+    If x is not a unit, let x = q₁ ⋯ qᵣ be an atomic factorization.
+    Each qᵢ divides x, and x divides p^e, so qᵢ ∣ p^e.
+    By APD, qᵢ = p for all i. Hence x = p^r ∈ ⟨p⟩. Similarly for y. -/
+theorem APD_implies_PPP {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) : PP_P M := by
+  intro p hp x y hxy
+  obtain ⟨e, he⟩ := hxy
+  -- Helper: if x is a non-unit and all atoms dividing x equal p, then x ∈ ⟨p⟩
+  have h_in_powers : ∀ z : M, ¬IsUnit z → (∀ q ∈ Atoms M, q ∣ z → q = p) → z ∈ Submonoid.powers p := by
+    intro z hz hq
+    obtain ⟨s, hs_atoms, hs_prod⟩ := h_atomic z hz
+    have h_all_p : ∀ a ∈ s, a = p := fun a ha =>
+      hq a (hs_atoms a ha) (hs_prod ▸ Multiset.dvd_prod ha)
+    rw [← hs_prod, Multiset.eq_replicate_of_mem h_all_p]
+    exact ⟨Multiset.card s, by simp [Multiset.prod_replicate]⟩
+  -- Show x ∈ ⟨p⟩
+  have hx : x ∈ Submonoid.powers p := by
+    by_cases hxu : IsUnit x
+    · exact ⟨0, by simp [h_reduced x hxu]⟩
+    · apply h_in_powers x hxu
+      intro q hq hqx
+      have hqpe : q ∣ p ^ e := dvd_trans hqx ⟨y, he⟩
+      exact h_apd p q hp hq e hqpe
+  -- Show y ∈ ⟨p⟩
+  have hy : y ∈ Submonoid.powers p := by
+    by_cases hyu : IsUnit y
+    · exact ⟨0, by simp [h_reduced y hyu]⟩
+    · apply h_in_powers y hyu
+      intro q hq hqy
+      have hqpe : q ∣ p ^ e := dvd_trans hqy ⟨x, by rw [mul_comm]; exact he⟩
+      exact h_apd p q hp hq e hqpe
+  exact ⟨hx, hy⟩
+
+/-- Powers of an atom are coprime to elements with disjoint support (APD version).
+    If p ∉ Support(x), then p^k and x are coprime.
+
+    Proof: Suppose q is an atom dividing both p^k and x.
+    By APD, q = p. But q divides x and p ∉ Support(x), contradiction. -/
+lemma power_coprime_of_not_in_support_APD {M : Type*} [CommMonoid M]
+    (_h_reduced : Reduced M) (h_apd : APD M)
+    {p : M} (hp : p ∈ Atoms M) {x : M} (hx : p ∉ Support x) (k : ℕ) :
+    AreCoprime (p ^ k) x := by
+  intro q hq hqpk hqx
+  simp [Support] at hx
+  -- By APD, any atom dividing p^k equals p
+  have hqp : q = p := h_apd p q hp hq k hqpk
+  subst hqp
+  exact hx hq hqx
+
+/-- Distinct atoms don't divide each other's powers (APD version). -/
+lemma distinct_atom_not_dvd_power_APD {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_apd : APD M)
+    {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (h_neq : p ≠ q) (k : ℕ) :
+    ¬ q ∣ p ^ k := by
+  intro h_div
+  have h_coprime : AreCoprime p q := by
+    intro r hr hrp hrq
+    -- r divides p, so r = p (both atoms)
+    obtain ⟨s, hs⟩ := hrp
+    cases hp.isUnit_or_isUnit hs with
+    | inl hr_unit => exact hr.not_isUnit hr_unit
+    | inr hs_unit =>
+      have : s = 1 := h_reduced s hs_unit
+      subst this; simp at hs; subst hs
+      -- Now r = p, and r divides q
+      obtain ⟨t, ht⟩ := hrq
+      cases hq.isUnit_or_isUnit ht with
+      | inl hp_unit => exact hp.not_isUnit hp_unit
+      | inr ht_unit =>
+        have : t = 1 := h_reduced t ht_unit
+        subst this; simp at ht
+        exact h_neq ht.symm
+  -- q divides p^k, and p,q are coprime (so p^k and q are coprime)
+  have h_coprime_pow : AreCoprime (p ^ k) q := by
+    have h_not_in_supp : p ∉ Support q := by
+      simp only [Support, Set.mem_setOf_eq, not_and]
+      intro _ h_dvd
+      exact h_coprime p hp (dvd_refl p) h_dvd
+    exact power_coprime_of_not_in_support_APD h_reduced h_apd hp h_not_in_supp k
+  exact h_coprime_pow q hq h_div (dvd_refl q)
 
 /-!
 ## Helper Definitions
