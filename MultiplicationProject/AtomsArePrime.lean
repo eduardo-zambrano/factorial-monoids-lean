@@ -48,74 +48,11 @@ set_option maxHeartbeats 0
 noncomputable section
 
 /-!
-## Auxiliary Lemma: Atom factorization in reduced monoids
+## Auxiliary Lemmas
 
-In a reduced monoid, if p is an atom and p = a * b, then a = 1 or b = 1.
+Note: `atom_eq_mul_iff` and `atoms_are_prime_coprime` have been moved to Basic.lean
+for System B (APD-based approach). They are re-exported from there.
 -/
-
-/-- In a reduced monoid, atoms have only trivial factorizations. -/
-lemma atom_eq_mul_iff {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    {p a b : M} (hp : p ∈ Atoms M) (h : p = a * b) :
-    a = 1 ∧ b = p ∨ a = p ∧ b = 1 := by
-  -- p is irreducible, so p = a * b means a or b is a unit
-  simp only [Atoms, Set.mem_setOf_eq] at hp
-  have h_or := hp.isUnit_or_isUnit h
-  cases h_or with
-  | inl ha =>
-    left
-    constructor
-    · exact h_reduced a ha
-    · rw [h_reduced a ha] at h; simp at h; exact h.symm
-  | inr hb =>
-    right
-    constructor
-    · rw [h_reduced b hb] at h; simp at h; exact h.symm
-    · exact h_reduced b hb
-
-/-!
-## Coprime Case: Direct from CFI bijection
-
-When a and b are coprime, we can apply CFI directly.
--/
-
-/-- **Atoms are prime (coprime case)**: If a and b are coprime and p | a*b, then p | a or p | b.
-
-    This uses CFI directly:
-    1. CFI gives bijection F_2(a) × F_2(b) ≅ F_2(a*b)
-    2. The factorization (p, m) of a*b has a unique preimage
-    3. Write p = a₁ * b₁ where (a₁, a₂) ∈ F_2(a) and (b₁, b₂) ∈ F_2(b)
-    4. Since p is irreducible: a₁ = 1 (so b₁ = p, hence p | b) or b₁ = 1 (so a₁ = p, hence p | a)
--/
-lemma atoms_are_prime_coprime {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_cfi : CFI M)
-    {p : M} (hp : p ∈ Atoms M)
-    {a b : M} (h_coprime : AreCoprime a b) (h_dvd : p ∣ a * b) :
-    p ∣ a ∨ p ∣ b := by
-  -- p | a*b means a*b = p * m for some m
-  obtain ⟨m, hm⟩ := h_dvd
-  -- Get the CFI bijection
-  have h_bij : Function.Bijective (Function.uncurry (labeledFactorizationMul (k := 2) (x := a) (y := b))) :=
-    h_cfi a b h_coprime
-  -- The factorization (p, m) is in F_2(a*b)
-  have h_prod : p * m = a * b := hm.symm
-  -- By surjectivity, (p, m) has a preimage in F_2(a) × F_2(b)
-  -- This means there exist factorizations of a and b whose coordinatewise product gives (p, m)
-  -- Let's use Coprime_Mul_Split from LocalPurity
-  obtain ⟨a₁, a₂, b₁, b₂, ha, hb, hab1, hab2⟩ := Coprime_Mul_Split h_cfi a b h_coprime p m h_prod
-  -- Now: a₁ * a₂ = a, b₁ * b₂ = b, a₁ * b₁ = p, a₂ * b₂ = m
-  -- Since p is an atom, a₁ * b₁ = p implies a₁ = 1 or b₁ = 1
-  have h_atom_factor := atom_eq_mul_iff h_reduced hp hab1.symm
-  rcases h_atom_factor with ⟨ha1, hb1⟩ | ⟨ha1, hb1⟩
-  · -- a₁ = 1 and b₁ = p
-    right
-    rw [hb1] at hb
-    -- b₁ * b₂ = b means p * b₂ = b, so p | b
-    exact ⟨b₂, hb.symm⟩
-  · -- a₁ = p and b₁ = 1
-    left
-    rw [ha1] at ha
-    -- a₁ * a₂ = a means p * a₂ = a, so p | a
-    exact ⟨a₂, ha.symm⟩
 
 /-!
 ## General Case: Reduction via p-free decomposition
@@ -209,19 +146,7 @@ lemma atom_dvd_multiset_prod {M : Type*} [CancelCommMonoid M]
         · exact fun x hx => hs x ( Multiset.mem_filter.mp hx |>.1 );
         · exact Multiset.mem_of_mem_filter ih
 
-/-
-The product of a multiset s is equal to q^(count of q in s) times the product of the elements of s not equal to q.
--/
-open scoped Classical
-
-lemma prod_eq_pow_count_mul_prod_filter_ne {M : Type*} [CommMonoid M]
-    (s : Multiset M) (q : M) :
-    s.prod = q ^ (s.count q) * (s.filter (· ≠ q)).prod := by
-      -- We can prove this by induction on the multiset s.
-      induction' s using Multiset.induction_on with x s ih;
-      · simp +decide;
-      · by_cases hx : x = q <;> simp_all +decide [ pow_succ', mul_assoc, mul_left_comm ];
-        rw [ Multiset.count_cons_of_ne ] ; aesop
+-- Note: prod_eq_pow_count_mul_prod_filter_ne has been moved to Basic.lean
 
 end AristotleLemmas
 

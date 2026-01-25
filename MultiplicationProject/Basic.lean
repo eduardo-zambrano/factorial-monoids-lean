@@ -221,6 +221,205 @@ lemma distinct_atoms_not_dvd {M : Type*} [CommMonoid M]
   exact h_neq h2
 
 /-!
+## APD-based Atoms Are Prime
+
+This section proves that atoms are prime under APD + CFI, without requiring cancellativity.
+This is the key result that makes System B work.
+-/
+
+/-- In a reduced monoid, atoms have only trivial factorizations. -/
+lemma atom_eq_mul_iff {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
+    {p a b : M} (hp : p ∈ Atoms M) (h : p = a * b) :
+    a = 1 ∧ b = p ∨ a = p ∧ b = 1 := by
+  simp only [Atoms, Set.mem_setOf_eq] at hp
+  have h_or := hp.isUnit_or_isUnit h
+  cases h_or with
+  | inl ha =>
+    left
+    constructor
+    · exact h_reduced a ha
+    · rw [h_reduced a ha] at h; simp at h; exact h.symm
+  | inr hb =>
+    right
+    constructor
+    · rw [h_reduced b hb] at h; simp at h; exact h.symm
+    · exact h_reduced b hb
+
+/-- CFI splitting lemma: If x and y are coprime and u * v = x * y,
+    then u and v can be split into factors of x and y. -/
+lemma Coprime_Mul_Split {M : Type*} [CommMonoid M] (h_cfi : CFI M)
+    (x y : M) (h_coprime : AreCoprime x y) (u v : M) (h_uv : u * v = x * y) :
+    ∃ a b c d, a * b = x ∧ c * d = y ∧ a * c = u ∧ b * d = v := by
+  have h_bij := h_cfi x y h_coprime
+  -- The factorization (u, v) of x*y has a preimage in F_2(x) × F_2(y)
+  have h_mem : (fun j : Fin 2 => if j = 0 then u else v) ∈ LabeledFactorizations 2 (x * y) := by
+    unfold LabeledFactorizations
+    simp only [Set.mem_setOf_eq, Fin.prod_univ_two, Fin.isValue]
+    simp only [ite_true, Fin.reduceEq, ite_false]
+    exact h_uv
+  obtain ⟨⟨⟨a, ha⟩, ⟨c, hc⟩⟩, h_eq⟩ := h_bij.2 ⟨_, h_mem⟩
+  -- a ∈ F_2(x), c ∈ F_2(y), and labeledFactorizationMul gives (u, v)
+  use a 0, a 1, c 0, c 1
+  simp only [LabeledFactorizations, Set.mem_setOf_eq, Fin.prod_univ_two, Fin.isValue] at ha hc
+  constructor
+  · exact ha
+  constructor
+  · exact hc
+  -- Extract the coordinatewise equality from h_eq
+  have h_coord := congr_arg Subtype.val h_eq
+  simp only [labeledFactorizationMul] at h_coord
+  have h0 : a 0 * c 0 = u := by
+    have := congr_fun h_coord 0
+    simp only [Fin.isValue] at this
+    simp only [ite_true] at this
+    exact this
+  have h1 : a 1 * c 1 = v := by
+    have := congr_fun h_coord 1
+    simp only [Fin.isValue, Fin.reduceEq, ite_false] at this
+    exact this
+  exact ⟨h0, h1⟩
+
+/-- Atoms are prime (coprime case): If a and b are coprime and p | a*b, then p | a or p | b.
+    This uses CFI directly and doesn't require cancellativity. -/
+lemma atoms_are_prime_coprime {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_cfi : CFI M)
+    {p : M} (hp : p ∈ Atoms M)
+    {a b : M} (h_coprime : AreCoprime a b) (h_dvd : p ∣ a * b) :
+    p ∣ a ∨ p ∣ b := by
+  obtain ⟨m, hm⟩ := h_dvd
+  have h_prod : p * m = a * b := hm.symm
+  obtain ⟨a₁, a₂, b₁, b₂, ha, hb, hab1, hab2⟩ := Coprime_Mul_Split h_cfi a b h_coprime p m h_prod
+  have h_atom_factor := atom_eq_mul_iff h_reduced hp hab1.symm
+  rcases h_atom_factor with ⟨ha1, hb1⟩ | ⟨ha1, hb1⟩
+  · right
+    rw [hb1] at hb
+    exact ⟨b₂, hb.symm⟩
+  · left
+    rw [ha1] at ha
+    exact ⟨a₂, ha.symm⟩
+
+/-- The product of a multiset equals q^(count of q) times the product of elements ≠ q. -/
+lemma prod_eq_pow_count_mul_prod_filter_ne {M : Type*} [CommMonoid M]
+    (s : Multiset M) (q : M) :
+    s.prod = q ^ (s.count q) * (s.filter (· ≠ q)).prod := by
+  induction' s using Multiset.induction_on with x s ih
+  · simp
+  · by_cases hx : x = q
+    · -- x = q case: count increases by 1, filter unchanged
+      rw [hx, Multiset.prod_cons, Multiset.count_cons_self, pow_succ']
+      conv_rhs => rw [mul_assoc]
+      congr 1
+      have h_filter : (q ::ₘ s).filter (· ≠ q) = s.filter (· ≠ q) := by
+        rw [Multiset.filter_cons_of_neg]
+        simp
+      rw [h_filter, ih]
+    · -- x ≠ q case: count unchanged, x added to filter
+      rw [Multiset.prod_cons]
+      have hqx : q ≠ x := Ne.symm hx
+      rw [Multiset.count_cons_of_ne hqx]
+      have h_filter : (x ::ₘ s).filter (· ≠ q) = x ::ₘ s.filter (· ≠ q) := by
+        rw [Multiset.filter_cons_of_pos]
+        exact hx
+      rw [h_filter, Multiset.prod_cons, ih]
+      -- Goal: x * (q^k * t.prod) = q^k * (x * t.prod)
+      rw [mul_comm x, mul_assoc, mul_comm x]
+
+/-- If p is an atom and p | s.prod where s is a multiset of atoms, then p ∈ s.
+    APD-based version that doesn't require cancellativity. -/
+lemma atom_dvd_multiset_prod_APD {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_apd : APD M) (h_cfi : CFI M)
+    (s : Multiset M) (hs : ∀ x ∈ s, x ∈ Atoms M)
+    (p : M) (hp : p ∈ Atoms M) (h_dvd : p ∣ s.prod) :
+    p ∈ s := by
+  induction' s using Multiset.strongInductionOn with s ih generalizing p
+  -- If s is empty, then s.prod = 1 and p ∤ 1 (contradiction)
+  by_cases hs_empty : s = 0
+  · simp_all [Atoms]
+    exact hp.not_dvd_one h_dvd
+  -- Otherwise, pick some q ∈ s
+  obtain ⟨q, hq_mem⟩ := Multiset.exists_mem_of_ne_zero hs_empty
+  -- Case split: p = q or p ≠ q
+  by_cases h_eq : p = q
+  · exact h_eq ▸ hq_mem
+  · -- p ≠ q. We'll show p ∣ (s.filter (· ≠ q)).prod and use IH.
+    let t := s.filter (· ≠ q)
+    have ht_atoms : ∀ x ∈ t, x ∈ Atoms M := fun x hx => hs x (Multiset.mem_filter.mp hx).1
+    have hq_atom : q ∈ Atoms M := hs q hq_mem
+    -- p and q are distinct atoms, so p ∤ q^k by APD
+    have h_p_not_dvd_qk : ¬ p ∣ q ^ (s.count q) := by
+      intro h_bad
+      -- APD says: p ∣ q^k → p = q
+      have h_eq' : p = q := h_apd q p hq_atom hp (s.count q) h_bad
+      exact h_eq h_eq'
+    -- q^k and t.prod are coprime (q ∉ Support(t.prod))
+    have h_t_smaller : t < s := lt_of_le_of_ne (Multiset.filter_le _ _) (by
+      intro h_eq_filter
+      have hq_in_t : q ∈ t := h_eq_filter ▸ hq_mem
+      exact (Multiset.mem_filter.mp hq_in_t).2 rfl)
+    have h_cop : AreCoprime (q ^ (s.count q)) t.prod := by
+      apply power_coprime_of_not_in_support_APD h_reduced h_apd hq_atom
+      simp only [Support, Set.mem_setOf_eq, not_and]
+      intro _ h_q_dvd_t
+      -- If q | t.prod, then by IH on t, q ∈ t. But t = s.filter (· ≠ q), so q ∉ t.
+      have h_q_in_t := ih t h_t_smaller ht_atoms q hq_atom h_q_dvd_t
+      exact (Multiset.mem_filter.mp h_q_in_t).2 rfl
+    -- s.prod = q^k * t.prod
+    have h_split : s.prod = q ^ (s.count q) * t.prod := prod_eq_pow_count_mul_prod_filter_ne s q
+    rw [h_split] at h_dvd
+    -- Apply atoms_are_prime_coprime: p | q^k ∨ p | t.prod
+    have h_cases := atoms_are_prime_coprime h_reduced h_cfi hp h_cop h_dvd
+    cases h_cases with
+    | inl h_p_qk => exact absurd h_p_qk h_p_not_dvd_qk
+    | inr h_p_t =>
+      have h_p_in_t := ih t h_t_smaller ht_atoms p hp h_p_t
+      exact Multiset.mem_of_mem_filter h_p_in_t
+
+/-- **Atoms are prime (APD version)**: Under APD and CFI, if p | a*b then p | a or p | b.
+    This is the System B version that doesn't require cancellativity. -/
+theorem atoms_are_prime_APD {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) (h_cfi : CFI M) :
+    ∀ p ∈ Atoms M, ∀ a b : M, p ∣ a * b → p ∣ a ∨ p ∣ b := by
+  intro p hp a b h_dvd
+  -- Handle unit cases
+  by_cases ha_unit : IsUnit a
+  · right
+    obtain ⟨u, rfl⟩ := ha_unit
+    have hu_eq_1 := h_reduced u u.isUnit
+    simp [hu_eq_1] at h_dvd ⊢
+    exact h_dvd
+  · by_cases hb_unit : IsUnit b
+    · left
+      obtain ⟨u, rfl⟩ := hb_unit
+      have hu_eq_1 := h_reduced u u.isUnit
+      simp [hu_eq_1] at h_dvd ⊢
+      exact h_dvd
+    · -- Neither a nor b is a unit; get atomic factorizations
+      obtain ⟨s_a, hs_a_atoms, hs_a_prod⟩ := h_atomic a ha_unit
+      obtain ⟨s_b, hs_b_atoms, hs_b_prod⟩ := h_atomic b hb_unit
+      -- a * b = (s_a + s_b).prod
+      have h_ab_prod : a * b = (s_a + s_b).prod := by
+        rw [← hs_a_prod, ← hs_b_prod, Multiset.prod_add]
+      -- p | (s_a + s_b).prod
+      have h_dvd' : p ∣ (s_a + s_b).prod := h_ab_prod ▸ h_dvd
+      -- By atom_dvd_multiset_prod_APD, p ∈ s_a + s_b
+      have h_in : p ∈ s_a + s_b := atom_dvd_multiset_prod_APD h_reduced h_apd h_cfi
+        (s_a + s_b) (fun x hx => by
+          cases Multiset.mem_add.mp hx with
+          | inl h => exact hs_a_atoms x h
+          | inr h => exact hs_b_atoms x h)
+        p hp h_dvd'
+      -- p ∈ s_a or p ∈ s_b
+      cases Multiset.mem_add.mp h_in with
+      | inl h_in_a =>
+        left
+        rw [← hs_a_prod]
+        exact Multiset.dvd_prod h_in_a
+      | inr h_in_b =>
+        right
+        rw [← hs_b_prod]
+        exact Multiset.dvd_prod h_in_b
+
+/-!
 ## Helper Definitions
 -/
 

@@ -446,15 +446,7 @@ lemma distinct_atom_not_dvd_power {M : Type*} [CancelCommMonoid M] (h_reduced : 
       unfold Support at this; simp_all +decide [ AreCoprime ] ;
       exact this k q hq h_div ( dvd_refl q )
 
-/-
-If x and y are coprime and u * v = x * y, then u and v can be split into factors of x and y.
--/
-lemma Coprime_Mul_Split {M : Type*} [CommMonoid M] (h_cfi : CFI M) (x y : M) (h_coprime : AreCoprime x y) (u v : M) (h_uv : u * v = x * y) : ∃ a b c d, a * b = x ∧ c * d = y ∧ a * c = u ∧ b * d = v := by
-  have := h_cfi x y h_coprime;
-  rcases this.2 ⟨ fun j => if j = 0 then u else v, by
-    unfold LabeledFactorizations; aesop; ⟩ with ⟨ ⟨ ⟨ a, ha ⟩, ⟨ b, hb ⟩ ⟩, h ⟩
-  generalize_proofs at *;
-  replace h := congr_arg ( fun f => ( f.1 0, f.1 1 ) ) h ; aesop
+-- Note: Coprime_Mul_Split has been moved to Basic.lean for System B
 
 end AristotleLemmas
 
