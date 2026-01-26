@@ -1,10 +1,10 @@
-# Lean 4 Formalization: Factorial Monoids via Labeled Factorization Counts
+# Factorial Monoids via Labeled Factorization Counts
 
 A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labeled Factorization Counts" by Eduardo Zambrano.
 
 **All main theorems from the paper (§5–§9) are fully formalized with no sorries.**
 
-## The Four Axioms (System B)
+## The Four Axioms
 
 The formalization uses four independent axioms to characterize factorial monoids:
 
@@ -15,7 +15,7 @@ The formalization uses four independent axioms to characterize factorial monoids
 | **CFI** | Coprime-Factor-Independence | Coprime parts factor independently (bijection condition) |
 | **CPL** | Coprime-Products-at-every-Length | Pairwise coprime non-units exist in every length |
 
-**Key innovation**: We do *not* assume cancellativity. Instead, cancellativity is *derived* as a consequence of factorial structure (Corollary 8.4).
+We do *not* assume cancellativity. Instead, cancellativity is *derived* as a consequence of factorial structure (Corollary 8.4).
 
 ### Main Theorem (Theorem 9.1)
 
@@ -67,16 +67,14 @@ This establishes the explicit counting formula F_k(m) = ∏_p C(v_p(m)+k-1, k-1)
 | — | CPL implies atoms are infinite | `atoms_infinite_of_CPL` | ✅ |
 | — | Factorial implies cancellative | `Factorial_implies_mul_left_cancel` | ✅ |
 
-**Summary: All main theorems formalized (100%), no sorries**
-
 The appendix lemmas (A.1, A.2) providing sufficient conditions for verifying CFI are not formalized, as they are outside the main proof chain.
 
 ## Logical Structure of the Proof
 
 ```
                               AXIOMS
-    ┌────────────┬────────────┬────────────┬────────────┐
-    │            │            │            │            │
+    ┌────────────┬────────────┬────────────┐
+    │            │            │            │
    APD         PP-D         CFI          CPL
     │            │            │            │
     │            │            │            │
@@ -165,21 +163,7 @@ Basic.lean (APD_implies_PPP, atoms_are_prime_APD)
                            └─ MainTheorem.lean (§9: thm_main)
 ```
 
-## Technical Notes
-
-### Why CommMonoid, Not CancelCommMonoid?
-
-Previous versions of this formalization assumed `CancelCommMonoid` (cancellative commutative monoid). The current version (System B) uses only `CommMonoid` and takes APD and PP-D as explicit axioms.
-
-**Advantage**: This makes the axiom system more transparent. Cancellativity is not an independent assumption but rather a *theorem*: factorial monoids are automatically cancellative, so we prove cancellativity rather than assume it.
-
-**Relationship to cancellativity**: In a reduced cancellative atomic monoid:
-- PP-D follows automatically (if p^a = p^b, cancellativity gives 1 = p^{b-a}, contradiction)
-- APD can be derived from cancellativity + CFI (though this requires more work)
-
-The System B approach with four explicit axioms is cleaner for formalization because it makes all assumptions explicit and derives all consequences.
-
-### The Four Axioms Are Independent
+## The Four Axioms Are Independent
 
 The paper (§10) constructs explicit counterexamples showing each axiom is necessary:
 - Failure of APD only: allows cross-prime divisibility
