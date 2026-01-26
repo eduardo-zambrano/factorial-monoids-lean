@@ -61,7 +61,6 @@ Main results to prove:
 -/
 
 import MultiplicationProject.GlobalMultiplicativity
-import MultiplicationProject.AtomsArePrime
 
 -- Harmonic `generalize_proofs` tactic (removed to avoid redeclaration conflicts)
 

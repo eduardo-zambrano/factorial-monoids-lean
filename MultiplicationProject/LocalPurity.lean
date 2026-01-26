@@ -3,20 +3,24 @@ Copyright (c) 2024 Eduardo Zambrano. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eduardo Zambrano
 
-# Section 5: Local Purity (CFI implies PP-P)
+# Section 5: Local Purity and Support Lemmas
 
-This file proves that CFI implies PP-P (Proposition 5.3 from the paper).
+This file contains helper lemmas for coprimality, support, and blockwise CFI.
 
 ## Main Results
 
-- `Prop_CFI_implies_PPP`: CFI implies PP-P (prime powers are factorially closed)
+- `coprime_of_distinct_atoms`: Distinct atoms are coprime
 - `atom_dvd_power_eq`: Under PP-P, any atom dividing p^k equals p
+- `Support_Power_Subset`: Support of p^k is contained in {p}
+- Blockwise support and coprimality lemmas for CFI
+
+Note: The CancelCommMonoid-based `Prop_CFI_implies_PPP` has been removed.
+For System B, use `APD_implies_PPP` from Basic.lean instead.
 
 Some proofs were completed with assistance from Aristotle (Harmonic's AI theorem prover).
 -/
 
 import MultiplicationProject.Utilities
-import MultiplicationProject.AtomDvdPower
 
 import Mathlib.Tactic.GeneralizeProofs
 
@@ -270,19 +274,6 @@ lemma coprime_of_distinct_atoms {M : Type*} [CommMonoid M] (h_reduced : Reduced 
       subst ht1; simp at ht
       exact h_neq (hs.trans ht.symm)
 
-/-- Powers of an atom are coprime to elements with disjoint support.
-    Uses atom_dvd_power_eq_of_CFI to show that any atom dividing p^k equals p. -/
-lemma power_coprime_of_not_in_support {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M)
-    (h_atomic : Atomic M) (h_cfi : CFI M) {p : M} (hp : p ∈ Atoms M) {x : M} (hx : p ∉ Support x) (k : ℕ) :
-    AreCoprime (p ^ k) x := by
-  intro q hq hqpk hqx
-  simp [Support] at hx
-  -- q divides p^k and q is an atom
-  -- By atom_dvd_power_eq_of_CFI, any atom dividing p^k equals p
-  have hqp : q = p := atom_dvd_power_eq_of_CFI h_reduced h_atomic h_cfi hp hq hqpk
-  subst hqp
-  exact hx hq hqx
-
 /-!
 ## Blockwise CFI Lemmas
 
@@ -432,50 +423,13 @@ lemma not_dvd_implies_coprime {M : Type*} [CommMonoid M] (_h_reduced : Reduced M
     · exact ⟨ hp₂.unit.inv, by simp +decide [ mul_assoc ], by simp +decide ⟩;
   aesop
 
-/-
-If p and q are distinct atoms, then q does not divide any power of p.
--/
-lemma distinct_atom_not_dvd_power {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M) (h_atomic : Atomic M) (h_cfi : CFI M)
-    {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M) (h_neq : p ≠ q) (k : ℕ) :
-    ¬ q ∣ p ^ k := by
-      have := @power_coprime_of_not_in_support M _ h_reduced h_atomic h_cfi;
-      intro h_div
-      have h_coprime : AreCoprime p q := by
-        exact coprime_of_distinct_atoms h_reduced hp hq h_neq;
-      specialize @this p hp q;
-      unfold Support at this; simp_all +decide [ AreCoprime ] ;
-      exact this k q hq h_div ( dvd_refl q )
-
 -- Note: Coprime_Mul_Split has been moved to Basic.lean for System B
+-- Note: distinct_atom_not_dvd_power (CancelCommMonoid version) removed - use APD-based version in Basic.lean
 
 end AristotleLemmas
 
-theorem Prop_CFI_implies_PPP {M : Type*} [CancelCommMonoid M] (h_reduced : Reduced M)
-    (h_atomic : Atomic M) (h_cfi : CFI M) :
-    PP_P M := by
-  intro p hp x y hxy
-  obtain ⟨e, he⟩ := hxy
-  -- The full proof uses Blockwise_CFI_k as described above
-  have h_unit : ∀ {x : M}, ¬IsUnit x → (∀ q : M, q ∈ Atoms M → q ∣ x → q = p) → x ∈ Submonoid.powers p := by
-    intro x hx hq
-    obtain ⟨s, hs⟩ := h_atomic x hx;
-    -- Since every element in s is an atom and divides x, by hq, each element in s must be p.
-    have h_s_p : ∀ a ∈ s, a = p := by
-      exact fun a ha => hq a ( hs.1 a ha ) ( hs.2 ▸ Multiset.dvd_prod ha );
-    rw [ ← hs.2, Multiset.eq_replicate_of_mem h_s_p ] ; aesop;
-  have h_divides : ∀ {x : M}, ¬IsUnit x → (∀ q : M, q ∈ Atoms M → q ∣ x → q ∣ p ^ e) → x ∈ Submonoid.powers p := by
-    intro x hx hx'; apply h_unit hx; intro q hq hqx; exact (by
-    by_contra hq_ne_p;
-    exact absurd ( hx' q hq hqx ) ( by exact? ));
-  have h_divides_x : x ∣ p ^ e := by
-    aesop
-  have h_divides_y : y ∣ p ^ e := by
-    exact?;
-  refine' ⟨ if hx : IsUnit x then _ else h_divides hx fun q hq hq' => _, if hy : IsUnit y then _ else h_divides hy fun q hq hq' => _ ⟩;
-  · have := h_reduced x hx; aesop;
-  · exact dvd_trans hq' h_divides_x;
-  · rw [ h_reduced _ hy ] ; exact ⟨ 0, by simp +decide ⟩;
-  · exact dvd_trans hq' h_divides_y
+-- Note: Prop_CFI_implies_PPP (CancelCommMonoid version) removed.
+-- Use APD_implies_PPP from Basic.lean instead for System B.
 
 /-!
 ## Corollaries (easy after PP-P)
