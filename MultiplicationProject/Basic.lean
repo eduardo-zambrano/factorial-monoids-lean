@@ -84,7 +84,14 @@ cancellativity and deriving PP-D and APD from it.
 def PP_D (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, Function.Injective (fun (e : ℕ) => p ^ e)
 
-/-- **Axiom APD**: Atom-Power-Divisibility.
+/-- **Axiom UAB**: Unique Atomic Base.
+    If p^k = q^m for atoms p, q and positive k, m, then p = q.
+    This says that distinct atoms have disjoint prime-power towers. -/
+def UAB (M : Type*) [Monoid M] : Prop :=
+  ∀ p q : M, p ∈ Atoms M → q ∈ Atoms M →
+    ∀ k m : ℕ, k ≥ 1 → m ≥ 1 → p ^ k = q ^ m → p = q
+
+/-- **Property APD**: Atom-Power-Divisibility.
     If an atom q divides p^k where p is also an atom, then q = p.
     This says that prime power submonoids are "pure" - no foreign atoms can divide in. -/
 def APD (M : Type*) [Monoid M] : Prop :=
