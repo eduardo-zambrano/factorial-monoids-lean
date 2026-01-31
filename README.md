@@ -8,7 +8,7 @@ This project formalizes a characterization of ordinary multiplication on natural
 
 **Formalization Status:**
 - Main theorems (Sections 5-9): Fully formalized with no sorries
-- Axiom independence (Proposition 3.3): CFI + CPL + UAB implies APD, with 6 sorries related to extraction termination
+- Axiom redundancy (Proposition 3.3): CFI + CPL + UAB implies APD, with 3 sorries related to extraction termination
 
 ## The Four Axioms (System B)
 
@@ -27,7 +27,7 @@ The formalization uses four independent axioms to characterize factorial monoids
 |----------|------|-------------|
 | **APD** | Atom-Power-Divisibility | If atom q divides p^k (p an atom), then q = p |
 
-**Proposition 3.3**: CFI + CPL + UAB implies APD. This is proven in `APD_Redundancy_v3.lean` with 6 sorries related to formalizing extraction termination in non-UFM atomic monoids. The mathematical argument is complete.
+**Proposition 3.3**: CFI + CPL + UAB implies APD.
 
 We do *not* assume cancellativity. Instead, cancellativity is *derived* as a consequence of factorial structure (Corollary 8.4).
 
@@ -62,8 +62,8 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 
 | Paper Ref | Name | Lean Name | Status |
 |-----------|------|-----------|--------|
-| **Section 3: Axiom Independence** |
-| Prop 3.3 | CFI + CPL + UAB => APD | `CFI_CPL_UAB_implies_APD` | 6 sorries* |
+| **Section 3: Axiom Redundancy** |
+| Prop 3.3 | CFI + CPL + UAB => APD | `CFI_CPL_UAB_implies_APD` | 3 sorries* |
 | **Section 5: Local Purity** |
 | Prop 5.1 | APD => PP-P | `APD_implies_PPP` | Complete |
 | **Section 6: Local Characterization** |
@@ -85,7 +85,15 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 | -- | CPL implies atoms are infinite | `atoms_infinite_of_CPL` | Complete |
 | -- | Factorial implies cancellative | `Factorial_implies_mul_left_cancel` | Complete |
 
-*The 6 sorries in Prop 3.3 relate to extraction termination in atomic (non-UFM) monoids. The mathematical argument is complete; the Lean formalization requires well-founded recursion machinery.
+### *Note on Proposition 3.3 (3 sorries)
+
+The 3 sorries in `APD_Redundancy_v6.lean` all represent the same termination issue:
+
+**Mathematical situation:** The proof extracts copies of an atom r from an element d, writing d = r^n × d' where d' = 1 or (r, d') coprime. This extraction terminates because atomic monoids have finite factorizations.
+
+**Formalization gap:** Lean requires explicit well-founded measures for recursive definitions. Constructing such a measure without cancellativity (which we derive *after* proving APD) requires subtle machinery for factorization length in non-UFM monoids.
+
+**Key point:** The mathematical argument is complete. The sorries are proof engineering gaps, not logical gaps. The paper's proof of Proposition 3.3 is valid; we simply haven't fully translated the termination argument into Lean's type theory.
 
 ## Logical Structure of the Proof
 
@@ -160,7 +168,7 @@ APD_implies_PPP        |                   |
 | File | Paper Section | Description |
 |------|---------------|-------------|
 | `Basic.lean` | Sections 2-3 | Core definitions, axioms (PP-D, UAB, CFI, CPL), APD definition, APD_implies_PPP |
-| `APD_Redundancy_v3.lean` | Section 3 | Proves CFI + CPL + UAB => APD (with 6 sorries) |
+| `APD_Redundancy_v6.lean` | Section 3 | Proves CFI + CPL + UAB => APD (with 3 sorries) |
 | `Utilities.lean` | -- | Transfer lemmas, support properties |
 | `LocalPurity.lean` | Section 5 | Helper lemmas for coprimality and blockwise CFI |
 | `LocalCharacterization.lean` | Section 6 | Local stars-and-bars (Theorem 6.2) |
@@ -173,7 +181,7 @@ APD_implies_PPP        |                   |
 ```
 Basic.lean (PP-D, UAB, CFI, CPL definitions; APD_implies_PPP)
   |
-  +-- APD_Redundancy_v3.lean (CFI + CPL + UAB => APD)
+  +-- APD_Redundancy_v6.lean (CFI + CPL + UAB => APD)
   |
   +-- Utilities.lean
        +-- LocalPurity.lean (Section 5 helper lemmas)
