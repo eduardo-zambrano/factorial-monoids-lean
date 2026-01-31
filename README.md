@@ -12,7 +12,7 @@ The formalization uses four independent axioms to characterize factorial monoids
 
 | Axiom | Name | Description |
 |-------|------|-------------|
-| **PP-D** | Prime-Powers-Distinct | For each atom p, the map e -> p^e is injective |
+| **PP-D** | Prime-Powers-Distinct | For each atom p, p^a = p^b implies a = b |
 | **UAB** | Unique-Atomic-Base | If p^k = q^m (atoms p, q; k, m >= 1), then p = q |
 | **CFI** | Coprime-Factor-Independence | Coprime parts factor independently (bijection condition) |
 | **CPL** | Coprime-Products-at-every-Length | Pairwise coprime non-units exist in every length |
