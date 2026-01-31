@@ -97,65 +97,63 @@ The 3 sorries in `APD_Redundancy_v6.lean` all represent the same termination iss
 ## Logical Structure of the Proof
 
 ```
-                                 AXIOMS
+                                  AXIOMS
        +-----------+-----------+-----------+-----------+
        |           |           |           |           |
-     PP-D         UAB         CFI         CPL         |
+     PP-D         UAB---------CFI---------CPL         |
        |           |           |           |           |
-       |           +-----+-----+           |           |
-       |                 |                 |           |
-       |                 v                 |           |
-       |    CFI_CPL_UAB_implies_APD        |           |
-       |         (Prop 5.1)*               |           |
-       |                 |                 |           |
-       |                 v                 |           |
-       |                APD                |           |
-       |                 |                 |           |
-       |                 v                 |           |
-       |         APD_implies_PPP           |           |
-       |           (Prop 5.2)              |           |
-       |                 |                 |           |
-       |                 v                 |           |
-       |               PP-P                |           |
-       |                 |                 |           |
-       +--------+--------+                 |           |
-                |                          |           |
-                v                          |           |
-        Lemma_PP_Unique                    |           |
-          (Lemma 6.1)                      |           |
-                |                          |           |
-                v                          |           |
-        Theorem_Local_SB                   |           |
-          (Thm 6.2)                        |           |
-                |                          |           |
-                |        +-----------------+           |
-                |        |                             |
-                |        v                             |
-                |   prop_coprime_mult                  |
-                |     (Prop 7.2)                       |
-                |        |                             |
-                +---+----+                             |
-                    |                                  |
-                    v                                  |
-               thm_master                              |
-                (Thm 8.2)                              |
-                    |                                  |
-                    v                                  |
-            prop_val_additive                          |
-              (Prop 8.3)                               |
-                    |                                  |
-                    v                                  |
-              cor_factorial                            |
-                (Cor 8.4)                              |
-                    |                                  |
-                    +----------------------------------+
-                    |
-                    v
-                thm_main
-              (Thm 9.1)
-             Factorial M
-                 AND
-         Set.Infinite (Atoms M)
+       |           +-----+-----+-----+-----+           |
+       |                 |                             |
+       |                 v                             |
+       |      CFI_CPL_UAB_implies_APD                  |
+       |           (Prop 5.1)*                         |
+       |                 |                             |
+       |                 v                             |
+       |                APD                            |
+       |                 |                             |
+       |                 v                             |
+       |          APD_implies_PPP                      |
+       |            (Prop 5.2)                         |
+       |                 |                             |
+       |                 v                             |
+       |               PP-P                            |
+       |                 |                             |
+       +--------+--------+                             |
+                |                                      |
+                v                                      |
+        Lemma_PP_Unique                                |
+          (Lemma 6.1)                                  |
+                |                                      |
+                v                                      |
+        Theorem_Local_SB         CFI                   |
+          (Thm 6.2)               |                    |
+                |                 |                    |
+                |                 v                    |
+                |        prop_coprime_mult             |
+                |          (Prop 7.2)                  |
+                |                 |                    |
+                +--------+--------+                    |
+                         |                             |
+                         v                             |
+                    thm_master                         |
+                     (Thm 8.2)                         |
+                         |                             |
+                         v                             |
+                 prop_val_additive                     |
+                   (Prop 8.3)                          |
+                         |                             |
+                         v                             |
+                   cor_factorial         CPL           |
+                     (Cor 8.4)            |            |
+                         |                |            |
+                         +-------+--------+------------+
+                                 |
+                                 v
+                             thm_main
+                            (Thm 9.1)
+                           Factorial M
+                               AND
+                       Set.Infinite (Atoms M)
 ```
 
 ## File Structure
