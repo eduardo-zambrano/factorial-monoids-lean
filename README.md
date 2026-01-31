@@ -6,11 +6,7 @@ A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labele
 
 This project formalizes a characterization of ordinary multiplication on natural numbers using only counting properties of labeled factorizations. The main theorem (Theorem 9.1) shows that a reduced atomic commutative monoid satisfying four simple axioms is factorial with infinitely many atoms, hence isomorphic to (N, x).
 
-**Formalization Status:**
-- Main theorems (Sections 5-9): Fully formalized with no sorries
-- Axiom redundancy (Proposition 5.1): CFI + CPL + UAB implies APD, with 3 sorries related to extraction termination
-
-## The Four Axioms (System B)
+## The Four Axioms
 
 The formalization uses four independent axioms to characterize factorial monoids:
 
@@ -157,7 +153,7 @@ The 3 sorries in `APD_Redundancy_v6.lean` all represent the same termination iss
 | File | Paper Section | Description |
 |------|---------------|-------------|
 | `Basic.lean` | Sections 2-3 | Core definitions, axioms (PP-D, UAB, CFI, CPL), APD definition, APD_implies_PPP |
-| `APD_Redundancy_v6.lean` | Section 3 | Proves CFI + CPL + UAB => APD (with 3 sorries) |
+| `APD_Redundancy_v6.lean` | Section 3 | Proves CFI + CPL + UAB => APD |
 | `Utilities.lean` | -- | Transfer lemmas, support properties |
 | `LocalPurity.lean` | Section 5 | Helper lemmas for coprimality and blockwise CFI |
 | `LocalCharacterization.lean` | Section 6 | Local stars-and-bars (Theorem 6.2) |
