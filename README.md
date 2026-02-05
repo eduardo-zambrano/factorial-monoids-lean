@@ -59,7 +59,7 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 | Paper Ref | Name | Lean Name | Status |
 |-----------|------|-----------|--------|
 | **Section 5: Deriving APD and Local Purity** |
-| Prop 5.1 | CFI + CPL + UAB => APD | `CFI_CPL_UAB_implies_APD` | 3 sorries* |
+| Prop 5.1 | CFI + CPL + UAB => APD | `CFI_CPL_UAB_implies_APD` | 1 sorry* |
 | Prop 5.2 | APD => PP-P | `APD_implies_PPP` | Complete |
 | **Section 6: Local Characterization** |
 | Lemma 6.1 | Unique factorization in prime powers | `Lemma_PP_Unique` | Complete |
@@ -80,15 +80,15 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 | -- | CPL implies atoms are infinite | `atoms_infinite_of_CPL` | Complete |
 | -- | Factorial implies cancellative | `Factorial_implies_mul_left_cancel` | Complete |
 
-### *Note on Proposition 5.1 (3 sorries)
+### *Note on Proposition 5.1 (1 sorry)
 
-The 3 sorries in `APD_Redundancy_v6.lean` all represent the same termination issue:
+The proof of `atom_dvd_pow_eq_with_UAB` uses strong induction on m. For the inductive step m = m'+2 with r | q^(m'+2):
 
-**Mathematical situation:** The proof extracts copies of an atom r from an element d, writing d = r^n × d' where d' = 1 or (r, d') coprime. This extraction terminates because atomic monoids have finite factorizations.
+- **Case r^(m'+2) does not divide q^(m'+2)** (sorry-free): Uses `Nat.find` to get the maximal n ≤ m'+1 with r^n | q^(m'+2). Then `AreCoprime(r^n, d)` follows from the induction hypothesis (since n < m'+2), and CFI gives the contradiction.
 
-**Formalization gap:** Lean requires explicit well-founded measures for recursive definitions. Constructing such a measure without cancellativity (which we derive *after* proving APD) requires subtle machinery for factorization length in non-UFM monoids.
+- **Case r^(m'+2) | q^(m'+2)**: If d = 1, UAB gives q = r. If d ≠ 1, this is the **single remaining sorry** — it requires showing that r^(m'+2) cannot properly divide q^(m'+2) when r ≠ q are atoms. The mathematical argument uses atomicity to bound extraction, but formalizing well-foundedness without cancellativity (derived AFTER APD) requires subtle machinery.
 
-**Key point:** The mathematical argument is complete. The sorries are proof engineering gaps, not logical gaps. The paper's proof of Proposition 5.1 is valid; we simply haven't fully translated the termination argument into Lean's type theory.
+**Key point:** The mathematical argument is complete. The sorry is a proof engineering gap, not a logical gap.
 
 ## Logical Structure of the Proof
 
@@ -153,7 +153,7 @@ The 3 sorries in `APD_Redundancy_v6.lean` all represent the same termination iss
 | File | Paper Section | Description |
 |------|---------------|-------------|
 | `Basic.lean` | Sections 2-3 | Core definitions, axioms (PP-D, UAB, CFI, CPL), APD definition, APD_implies_PPP |
-| `APD_Redundancy_v6.lean` | Section 3 | Proves CFI + CPL + UAB => APD |
+| `APD_Redundancy_v6.lean` | Section 5 | Proves CFI + CPL + UAB => APD |
 | `Utilities.lean` | -- | Transfer lemmas, support properties |
 | `LocalPurity.lean` | Section 5 | Helper lemmas for coprimality and blockwise CFI |
 | `LocalCharacterization.lean` | Section 6 | Local stars-and-bars (Theorem 6.2) |
