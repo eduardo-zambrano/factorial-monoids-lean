@@ -147,7 +147,7 @@ theorem atoms_infinite_of_CPL {M : Type*} [CommMonoid M]
     exact absurd h_card ( by rw [ List.toFinset_card_of_nodup ( nodup_of_pairwise_coprime h_atomic L hL_nonunit hL_coprime ) ] ; simp +decide [ hL_length ] );
   · exact h_finite
 
-/-- **Theorem 9.1**: Main result (System B version).
+/-- **Theorem 9.1**: Main result (APD version).
 
     Under (APD), (PP-D), (CFI), and (CPL):
     (a) M is factorial (isomorphic to ⊕_{p ∈ P} ℕ₀)
@@ -163,6 +163,24 @@ theorem thm_main {M : Type*} [CommMonoid M]
     Factorial M ∧ Set.Infinite (Atoms M) :=
   ⟨cor_factorial h_reduced h_atomic h_apd h_ppd h_cfi,
    atoms_infinite_of_CPL h_atomic h_cpl⟩
+
+/-- **Theorem 9.1**: Main result (System B version, sorry-free).
+
+    Under (PP-P), (PP-D), (CFI), and (CPL):
+    (a) M is factorial (isomorphic to ⊕_{p ∈ P} ℕ₀)
+    (b) The atom set P is countably infinite, hence M ≅ (ℕ, ×)
+
+    This uses the axiom system {PP-D, PP-P, CFI, CPL}, where APD is
+    derived from PP-P via `PPP_implies_APD`. The entire proof chain
+    from these axioms to the conclusion is sorry-free.
+
+    Note: This uses CommMonoid (not CancelCommMonoid) since cancellativity
+    is derived from the axioms via Factorial. -/
+theorem thm_main_PPP {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_ppp : PP_P M) (h_ppd : PP_D M) (h_cfi : CFI M) (h_cpl : CPL M) :
+    Factorial M ∧ Set.Infinite (Atoms M) :=
+  thm_main h_reduced h_atomic (PPP_implies_APD h_reduced h_ppp) h_ppd h_cfi h_cpl
 
 /-- The atom set is countable when M is countable. -/
 theorem atoms_countable {M : Type*} [CommMonoid M] [Countable M] :

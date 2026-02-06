@@ -63,20 +63,25 @@ def Support {M : Type*} [Monoid M] (m : M) : Set M :=
 /-!
 ## The Four Axioms (System B)
 
-In a reduced atomic commutative monoid, the following four independent axioms
+In a reduced atomic commutative monoid, the following four axioms
 characterize factorial monoids:
 
 - **PP-D**: Powers of atoms are distinct (p^a = p^b → a = b)
-- **APD**: Atom-Power-Divisibility (if atom q divides p^k where p is an atom, then q = p)
+- **PP-P**: Prime powers are factorially closed (if x*y ∈ ⟨p⟩ then x, y ∈ ⟨p⟩)
 - **CFI**: Coprime parts factor independently
 - **CPL**: Coprime tuples come in every length
 
 Key derived properties:
-- **PP-P** (prime powers factorially closed) follows trivially from APD
+- **APD** (Atom-Power-Divisibility) follows from PP-P (see `PPP_implies_APD`)
+- **UAB** (Unique-Atomic-Base) follows from APD (see `APD_implies_UAB`)
 - **Cancellativity** follows from Factorial (which follows from the four axioms)
 
-This formulation (System B) uses four independent axioms rather than assuming
-cancellativity and deriving PP-D and APD from it.
+This formulation (System B) uses four axioms rather than assuming
+cancellativity and deriving PP-D and PP-P from it.
+
+Note: While we were not able to prove that the four axioms are logically
+independent (CFI may imply PP-P), the formalization is sorry-free:
+PP-P ⟹ APD is proven directly in `PPP_implies_APD`.
 -/
 
 /-- **Axiom PP-D**: Powers of atoms are distinct.
@@ -91,15 +96,17 @@ def UAB (M : Type*) [Monoid M] : Prop :=
   ∀ p q : M, p ∈ Atoms M → q ∈ Atoms M →
     ∀ k m : ℕ, k ≥ 1 → m ≥ 1 → p ^ k = q ^ m → p = q
 
-/-- **Property APD**: Atom-Power-Divisibility.
+/-- **Derived Property APD**: Atom-Power-Divisibility.
     If an atom q divides p^k where p is also an atom, then q = p.
-    This says that prime power submonoids are "pure" - no foreign atoms can divide in. -/
+    This says that prime power submonoids are "pure" - no foreign atoms can divide in.
+    Follows from PP-P (see `PPP_implies_APD`). -/
 def APD (M : Type*) [Monoid M] : Prop :=
   ∀ p q : M, p ∈ Atoms M → q ∈ Atoms M → ∀ k : ℕ, q ∣ p ^ k → q = p
 
-/-- **Derived Property PP-P**: Prime powers are factorially closed.
+/-- **Axiom PP-P**: Prime powers are factorially closed.
     For every atom p, if x * y is a power of p, then x and y are powers of p.
-    This follows trivially from APD (see `APD_implies_PPP`). -/
+    This implies APD (see `PPP_implies_APD`), which in turn implies
+    APD_implies_PPP (the converse direction). -/
 def PP_P (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, ∀ x y : M, x * y ∈ Submonoid.powers p →
     x ∈ Submonoid.powers p ∧ y ∈ Submonoid.powers p
@@ -128,9 +135,54 @@ def CPL (M : Type*) [Monoid M] : Prop :=
   ∀ r : ℕ, ∃ (L : List M), L.length = r ∧ (∀ x ∈ L, ¬ IsUnit x) ∧ L.Pairwise AreCoprime
 
 /-!
+## PP-P implies APD
+
+This is the key lemma that makes System B work: PP-P implies APD (sorry-free).
+The converse (APD implies PP-P) also holds, establishing their equivalence.
+-/
+
+/-- PP-P implies APD: If prime power submonoids are factorially closed,
+    then any atom dividing a prime power must be that prime.
+
+    Proof: Suppose q | p^k. Write p^k = q * m. By PP-P, both q and m are in ⟨p⟩.
+    So q = p^j for some j. Since q is irreducible:
+    - j = 0: q = 1, contradiction (atoms are not units)
+    - j = 1: q = p, as desired
+    - j ≥ 2: q = p * p^(j-1), contradicting irreducibility of q -/
+theorem PPP_implies_APD {M : Type*} [CommMonoid M]
+    (_h_reduced : Reduced M) (h_ppp : PP_P M) : APD M := by
+  intro p q hp hq k hdvd
+  obtain ⟨m, hm⟩ := hdvd
+  have ⟨⟨j, hj⟩, _⟩ := h_ppp p hp q m ⟨k, hm⟩
+  match j with
+  | 0 => simp at hj; exact absurd (hj ▸ isUnit_one) hq.not_isUnit
+  | 1 => simp at hj; exact hj.symm
+  | _ + 2 =>
+    exfalso
+    have h_reducible : ¬ Irreducible (p ^ (‹_› + 2)) := by
+      rw [pow_succ', irreducible_mul_iff]
+      simp_all +decide [not_or, irreducible_iff]
+    unfold Atoms at hq; aesop
+
+/-- APD implies UAB: If any atom dividing a prime power equals that prime,
+    then distinct atoms have disjoint prime-power towers.
+
+    Proof: If p^k = q^m with k, m ≥ 1, then q | q^m = p^k, so q = p by APD. -/
+theorem APD_implies_UAB {M : Type*} [CommMonoid M]
+    (h_apd : APD M) : UAB M := by
+  intro p q hp hq k m hk _hm hpk_eq_qm
+  have hq_dvd_pk : q ∣ p ^ k := by
+    have : q * q ^ (m - 1) = q ^ m := by
+      rw [← pow_succ']
+      congr 1
+      omega
+    exact ⟨q ^ (m - 1), by rw [hpk_eq_qm, ← this]⟩
+  exact (h_apd p q hp hq k hq_dvd_pk).symm
+
+/-!
 ## APD implies PP-P
 
-This is the key lemma that makes System B work: APD trivially implies PP-P.
+APD trivially implies PP-P (the converse of PP-P ⟹ APD above).
 -/
 
 /-- APD implies PP-P: If atoms can only divide "their own" prime powers,
@@ -553,5 +605,27 @@ lemma Factorial_implies_mul_right_cancel {M : Type*} [CommMonoid M]
     {a b c : M} (h : b * a = c * a) : b = c := by
   rw [mul_comm b a, mul_comm c a] at h
   exact Factorial_implies_mul_left_cancel h_reduced h_atomic h_factorial h
+
+/-!
+## ACCP (Ascending Chain Condition on Principal Ideals)
+
+Standard well-foundedness condition for divisibility in commutative monoids.
+Mathlib's WfDvdMonoid requires CommMonoidWithZero; we define our own version
+for CommMonoid (no zero element).
+-/
+
+/-- Strict divisibility: a strictly divides b if b = a * c for some non-unit c.
+    This is the CommMonoid analogue of Mathlib's DvdNotUnit (which requires
+    CommMonoidWithZero due to the a ≠ 0 condition). -/
+def StrictDvd {M : Type*} [CommMonoid M] (a b : M) : Prop :=
+  ∃ c : M, ¬IsUnit c ∧ b = a * c
+
+/-- The Ascending Chain Condition on Principal ideals (ACCP).
+    States that the strict divisibility relation is well-founded:
+    there are no infinite strictly descending divisibility chains.
+    In a cancellative monoid, this follows from atomicity.
+    This is the CommMonoid analogue of Mathlib's WfDvdMonoid. -/
+def ACCP (M : Type*) [CommMonoid M] : Prop :=
+  WellFounded (fun (a b : M) => StrictDvd a b)
 
 end

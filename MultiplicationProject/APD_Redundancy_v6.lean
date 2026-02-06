@@ -3,23 +3,29 @@ Copyright (c) 2024 Eduardo Zambrano. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eduardo Zambrano
 
-# Proposition 5.1: CFI + CPL + UAB implies APD
+# Proposition 5.1: CFI + CPL + UAB + ACCP implies APD (Supplementary)
 
-This file proves that APD follows from CFI, CPL, and UAB.
+**Note**: This file is supplementary. The main theorem chain uses the axiom
+system {PP-D, PP-P, CFI, CPL} (see `thm_main_PPP` in MainTheorem.lean),
+where APD is derived sorry-free from PP-P via `PPP_implies_APD` in Basic.lean.
 
-## Proof Strategy (Nat.find + CFI)
+This file proves APD from the alternative axiom system {PP-D, UAB, CFI, CPL}
+plus ACCP (Ascending Chain Condition on Principal ideals — well-foundedness
+of strict divisibility). ACCP is a standard condition in commutative algebra,
+strictly between "atomic" and "UFD." In cancellative monoids ACCP follows
+from atomicity; in our non-cancellative setting it is an additional assumption.
 
-Strong induction on m. For the inductive step m = m'+2 with r | q^(m'+2):
+## Proof Strategy (ACCP + WF induction + CFI)
 
-- **Case r^(m'+2) ∤ q^(m'+2)**: Use Nat.find to get the maximal n ≤ m'+1
-  with r^n | q^(m'+2). Then AreCoprime(r^n, d) follows from the IH
-  (since n < m'+2), and CFI gives the contradiction. (Sorry-free.)
+Well-founded induction on elements via ACCP. For an atom-power x = t^j
+and an atom s dividing x with s ≠ t:
 
-- **Case r^(m'+2) | q^(m'+2)**: If d = 1, UAB gives q = r. If d ≠ 1,
-  this is the single remaining sorry — it requires showing that r^(m'+2)
-  cannot properly divide q^(m'+2) when r ≠ q. The mathematical argument
-  uses atomicity to bound extraction, but formalizing the well-foundedness
-  without cancellativity (derived AFTER APD) requires subtle machinery.
+1. **Extract maximal s-power**: x = s^m * c with s ∤ c (via ACCP).
+2. **If c is a unit**: t^j = s^m, so UAB gives t = s, contradiction.
+3. **If c is not a unit**: StrictDvd(s^m, t^j), so the WF induction hypothesis
+   gives: every atom dividing s^m equals s. Combined with s ∤ c (maximality),
+   this gives AreCoprime(s^m, c). Then CFI + irreducibility of t yields s = t,
+   contradiction.
 -/
 
 import MultiplicationProject.Basic
@@ -76,137 +82,152 @@ lemma atom_dvd_of_not_coprime (h_reduced : Reduced M) {q c : M}
   rw [← hrq]
   exact hr_dvd_c
 
+/-! ## Maximal atom-power extraction via ACCP -/
+
+/-- In a reduced monoid with ACCP, if atom s divides x, we can extract a
+    maximal s-power: x = s^m * c where s ∤ c and m ≥ 1.
+    The extraction terminates by well-foundedness of StrictDvd. -/
+lemma maximal_atom_power_extraction (_h_reduced : Reduced M) (haccp : ACCP M)
+    {s x : M} (hs : s ∈ Atoms M) (h_dvd : s ∣ x) :
+    ∃ (m : ℕ) (c : M), m ≥ 1 ∧ x = s ^ m * c ∧ ¬(s ∣ c) := by
+  -- We induct on x using the well-founded StrictDvd relation
+  induction x using haccp.induction with
+  | h x ih =>
+  obtain ⟨c₀, hc₀⟩ := h_dvd  -- x = s * c₀
+  by_cases h_s_c₀ : s ∣ c₀
+  · -- s | c₀: write c₀ = s * c₁, so x = s² * c₁. Recurse on c₀.
+    -- First show StrictDvd c₀ x
+    have h_strict : StrictDvd c₀ x := by
+      refine ⟨s, ?_, ?_⟩
+      · rw [Atoms, Set.mem_setOf_eq] at hs; exact hs.not_isUnit
+      · rw [hc₀, mul_comm]
+    obtain ⟨m', c', hm', hc₀_eq, hndvd⟩ := ih c₀ h_strict h_s_c₀
+    refine ⟨m' + 1, c', by omega, ?_, hndvd⟩
+    rw [hc₀, hc₀_eq, pow_succ']
+    rw [mul_assoc]
+  · -- s ∤ c₀: done with m = 1
+    exact ⟨1, c₀, le_refl 1, by rw [hc₀, pow_one], h_s_c₀⟩
+
 /-! ## Main Theorem -/
 
-/-- The only atomic divisor of q^m (for q an atom) is q itself, assuming CFI + CPL + UAB.
+/-- The only atomic divisor of t^j (for t an atom) is t itself,
+    assuming CFI + CPL + UAB + ACCP.
 
-Proof structure (restructured to use Nat.find for maximal extraction):
-- Strong induction on m.
-- For m = m'+2: case-split on whether r^(m'+2) | q^(m'+2).
-- If NOT: use Nat.find to get maximal n ≤ m'+1 with r^n | q^(m'+2),
-  then AreCoprime(r^n, d) by IH, and CFI gives contradiction. (Sorry-free.)
-- If YES: UAB handles d = 1; d ≠ 1 is the single remaining sorry. -/
-lemma atom_dvd_pow_eq_with_UAB (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (hcfi : CFI M) (hcpl : CPL M) (huab : UAB M)
+    Proof by well-founded induction on elements (via ACCP).
+    For x = t^j with atom s | x and s ≠ t:
+    - Extract maximal s-power: t^j = s^m * c with s ∤ c.
+    - If c is a unit: t^j = s^m → UAB → t = s, contradiction.
+    - If c is not a unit: StrictDvd(s^m, t^j), so the WF IH on s^m gives
+      every atom dividing s^m equals s. Combined with s ∤ c (maximality),
+      AreCoprime(s^m, c). Then CFI + irreducibility of t yields s = t,
+      contradiction. -/
+lemma atom_dvd_pow_eq_with_UAB (h_reduced : Reduced M) (_h_atomic : Atomic M)
+    (hcfi : CFI M) (_hcpl : CPL M) (huab : UAB M) (haccp : ACCP M)
     {q : M} (hq : q ∈ Atoms M) {r : M} (hr : r ∈ Atoms M) :
     ∀ m : ℕ, m ≥ 1 → r ∣ q ^ m → r = q := by
-  suffices h_univ : ∀ m : ℕ, ∀ q r : M, q ∈ Atoms M → r ∈ Atoms M →
-      m ≥ 1 → r ∣ q ^ m → r = q by
+  -- Reformulate: for every element x, if x = t^j (t atom, j ≥ 1) and
+  -- s is an atom dividing x, then s = t.
+  -- We prove this by well-founded induction on x (via ACCP).
+  suffices key : ∀ x : M,
+      (∀ (t : M), t ∈ Atoms M → ∀ (j : ℕ), j ≥ 1 → x = t ^ j →
+        ∀ (s : M), s ∈ Atoms M → s ∣ x → s = t) by
     intro m hm hdvd
-    exact h_univ m q r hq hr hm hdvd
-  intro m
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-  intro q r hq hr hm hdvd
-  match m with
-  | 0 => omega
-  | 1 => simp at hdvd; exact atom_dvd_atom_eq h_reduced hq hr hdvd
-  | m' + 2 =>
-    by_contra hrq
-    have hne_rq : r ≠ q := hrq
-    exfalso
-    by_cases h_high : r ^ (m' + 2) ∣ q ^ (m' + 2)
-    · -- Case 1: r^(m'+2) | q^(m'+2)
-      obtain ⟨d, hd⟩ := h_high
-      by_cases hd1 : d = 1
-      · -- q^(m'+2) = r^(m'+2): UAB gives q = r, contradiction
-        rw [hd1, mul_one] at hd
-        exact hne_rq (huab q r hq hr (m' + 2) (m' + 2) (by omega) (by omega) hd).symm
-      · -- q^(m'+2) = r^(m'+2) * d with d ≠ 1
-        -- This case requires showing that r^(m'+2) cannot properly divide q^(m'+2)
-        -- when r ≠ q are atoms. The mathematical argument uses atomicity to bound
-        -- the extraction process, but formalizing well-foundedness without
-        -- cancellativity (derived AFTER APD) requires subtle machinery.
-        sorry
-    · -- Case 2: r^(m'+2) ∤ q^(m'+2) — fully resolved via Nat.find + CFI
-      -- Find the first n where r^n ∤ q^(m'+2) using classical well-ordering
-      have h_exists : ∃ n, ¬ (r ^ n ∣ q ^ (m' + 2)) := ⟨m' + 2, h_high⟩
-      set n₀ := Nat.find h_exists with hn₀_def
-      have hn₀_spec : ¬ (r ^ n₀ ∣ q ^ (m' + 2)) := Nat.find_spec h_exists
-      -- For all j < n₀, r^j | q^(m'+2) (by minimality of n₀)
-      have hn₀_min : ∀ j, j < n₀ → r ^ j ∣ q ^ (m' + 2) := by
-        intro j hj
-        exact not_not.mp (Nat.find_min h_exists hj)
-      -- n₀ ≥ 2: r^0 = 1 divides anything, r^1 = r divides q^(m'+2) by hypothesis
-      have hn₀_ge : n₀ ≥ 2 := by
-        have h0 : n₀ ≠ 0 := by
-          intro h; rw [h, pow_zero] at hn₀_spec; exact hn₀_spec (one_dvd _)
-        have h1 : n₀ ≠ 1 := by
-          intro h; rw [h, pow_one] at hn₀_spec; exact hn₀_spec hdvd
-        omega
-      -- n₀ ≤ m'+2: since r^(m'+2) ∤ q^(m'+2) and n₀ is the first such n
-      have hn₀_le : n₀ ≤ m' + 2 := by
-        by_contra h_gt
-        push_neg at h_gt
-        exact h_high (hn₀_min (m' + 2) (by omega))
-      -- Set n := n₀ - 1 (the maximal power of r dividing q^(m'+2))
-      set n := n₀ - 1 with hn_def
-      have hn_ge : n ≥ 1 := by omega
-      have hn_le : n ≤ m' + 1 := by omega
-      have hn_dvd : r ^ n ∣ q ^ (m' + 2) := hn₀_min n (by omega)
-      have hn_not_dvd : ¬ (r ^ (n + 1) ∣ q ^ (m' + 2)) := by
-        have h_eq : n + 1 = n₀ := by omega
-        rw [h_eq]; exact hn₀_spec
-      -- Write q^(m'+2) = r^n * d
-      obtain ⟨d, heq⟩ := hn_dvd
-      -- AreCoprime(r, d): if r | d then r^(n+1) | q^(m'+2), contradicting maximality
-      have hrd_cop : AreCoprime r d := by
-        intro p hp hp_r hp_d
-        have hp_eq_r : p = r := atom_dvd_atom_eq h_reduced hr hp hp_r
-        rw [hp_eq_r] at hp_d
-        apply hn_not_dvd
-        obtain ⟨d', hd'⟩ := hp_d
-        exact ⟨d', by rw [heq, hd', ← mul_assoc, ← pow_succ]⟩
-      -- AreCoprime(r^n, d): any atom dividing r^n equals r (by IH, since n ≤ m'+1),
-      -- and r ∤ d by AreCoprime(r, d)
-      have hrn_d_cop : AreCoprime (r ^ n) d := by
-        intro s hs hs_rn hs_d
-        have hs_eq_r : s = r := ih n (by omega) r s hr hs hn_ge hs_rn
-        rw [hs_eq_r] at hs_d
-        exact hrd_cop r hr (dvd_refl r) hs_d
-      -- Apply CFI to the coprime pair (r^n, d) with product q^(m'+2)
-      have hbij := hcfi (r ^ n) d hrn_d_cop
-      have hfact : q * q ^ (m' + 1) = r ^ n * d := by
-        calc q * q ^ (m' + 1) = q ^ (m' + 2) := by rw [← pow_succ']
-          _ = r ^ n * d := heq
-      let qqm : LabeledFactorizations 2 (r ^ n * d) :=
-        ⟨![q, q ^ (m' + 1)], by simp [LabeledFactorizations, Fin.prod_univ_two, hfact]⟩
-      obtain ⟨⟨frn, fd⟩, hpre⟩ := hbij.surjective qqm
-      have hfrn := frn.property; have hfd := fd.property
-      simp only [LabeledFactorizations, Set.mem_setOf_eq, Fin.prod_univ_two] at hfrn hfd
-      have h0 : frn.val 0 * fd.val 0 = q := by
-        have := congrFun (congrArg Subtype.val hpre) 0
-        simp only [labeledFactorizationMul] at this; exact this
-      have h1 : frn.val 1 * fd.val 1 = q ^ (m' + 1) := by
-        have := congrFun (congrArg Subtype.val hpre) 1
-        simp only [labeledFactorizationMul] at this; exact this
-      -- q is irreducible, so in frn.val 0 * fd.val 0 = q, one factor is a unit
-      have hq_irr := hq; rw [Atoms, Set.mem_setOf_eq] at hq_irr
-      have hor := hq_irr.isUnit_or_isUnit h0.symm
-      cases hor with
-      | inl hfrn0_unit =>
-        -- frn.val 0 is a unit, hence = 1 (reduced)
-        have hfrn0 : frn.val 0 = 1 := h_reduced _ hfrn0_unit
-        rw [hfrn0, one_mul] at hfrn; rw [hfrn] at h1
-        -- h1: r^n * fd.val 1 = q^(m'+1), so r | q^(m'+1)
-        have hr_dvd_qm1 : r ∣ q ^ (m' + 1) :=
-          dvd_trans (dvd_pow_self r (by omega : n ≠ 0)) ⟨fd.val 1, h1.symm⟩
-        -- By IH (m'+1 < m'+2): r = q, contradiction
-        exact hne_rq (ih (m' + 1) (by omega) q r hq hr (by omega) hr_dvd_qm1)
-      | inr hfd0_unit =>
-        -- fd.val 0 is a unit, hence = 1 (reduced)
-        have hfd0 : fd.val 0 = 1 := h_reduced _ hfd0_unit
-        rw [hfd0, mul_one] at h0
-        -- h0: frn.val 0 = q and hfrn: frn.val 0 * frn.val 1 = r^n
-        -- So q | r^n
-        have hq_dvd_rn : q ∣ r ^ n := ⟨frn.val 1, by rw [← h0]; exact hfrn.symm⟩
-        -- By IH (n ≤ m'+1 < m'+2): q = r, contradiction
-        exact hne_rq (ih n (by omega) r q hr hq hn_ge hq_dvd_rn).symm
+    exact key (q ^ m) q hq m hm rfl r hr hdvd
+  -- Prove by well-founded induction on x using ACCP
+  intro x
+  induction x using haccp.induction with
+  | h x ih =>
+  intro t ht j hj hx s hs h_s_dvd
+  -- Base case: j = 1
+  by_cases hj1 : j = 1
+  · subst hj1; rw [pow_one] at hx; subst hx
+    exact atom_dvd_atom_eq h_reduced ht hs h_s_dvd
+  -- Now j ≥ 2
+  have hj_ge2 : j ≥ 2 := by omega
+  by_contra h_neq
+  exfalso
+  -- Step 1: Extract maximal s-power from x = t^j using ACCP
+  obtain ⟨m, c, hm_ge, heq, h_ndvd⟩ :=
+    maximal_atom_power_extraction h_reduced haccp hs h_s_dvd
+  -- heq : x = s^m * c, s ∤ c
+  -- Step 2: Case split on whether c is a unit
+  by_cases hc_unit : IsUnit c
+  · -- c is a unit, hence = 1 in reduced monoid
+    have hc1 : c = 1 := h_reduced c hc_unit
+    rw [hc1, mul_one] at heq
+    -- x = s^m, i.e. t^j = s^m, so UAB gives t = s, contradiction
+    rw [hx] at heq
+    -- heq : t^j = s^m, i.e. s^m = t^j by .symm
+    exact h_neq (huab t s ht hs j m (by omega) hm_ge heq).symm
+  · -- c is not a unit
+    -- Step 3: StrictDvd(s^m, x) since x = s^m * c with c non-unit
+    have h_strict_sm : StrictDvd (s ^ m) x := ⟨c, hc_unit, heq⟩
+    -- Step 4: By WF IH on s^m, every atom dividing s^m equals s
+    have h_only_s : ∀ (u : M), u ∈ Atoms M → u ∣ s ^ m → u = s := by
+      intro u hu hu_dvd
+      exact ih (s ^ m) h_strict_sm s hs m hm_ge rfl u hu hu_dvd
+    -- Step 5: AreCoprime(s^m, c) — any atom dividing s^m equals s,
+    -- and s ∤ c by maximality
+    have h_cop : AreCoprime (s ^ m) c := by
+      intro p hp hp_sm hp_c
+      have hp_eq_s : p = s := h_only_s p hp hp_sm
+      rw [hp_eq_s] at hp_c
+      exact h_ndvd hp_c
+    -- Step 6: Apply CFI to the coprime pair (s^m, c) with product t^j
+    rw [hx] at heq
+    have hbij := hcfi (s ^ m) c h_cop
+    -- Build the factorization (t, t^{j-1}) ∈ F_2(t^j)
+    have hfact : t * t ^ (j - 1) = s ^ m * c := by
+      have : t * t ^ (j - 1) = t ^ j := by
+        have hj_eq : j = j - 1 + 1 := by omega
+        conv_rhs => rw [hj_eq, pow_succ']
+      rw [this, heq]
+    let ttj : LabeledFactorizations 2 (s ^ m * c) :=
+      ⟨![t, t ^ (j - 1)], by simp [LabeledFactorizations, Fin.prod_univ_two, hfact]⟩
+    obtain ⟨⟨fsm, fc⟩, hpre⟩ := hbij.surjective ttj
+    have hfsm := fsm.property; have hfc := fc.property
+    simp only [LabeledFactorizations, Set.mem_setOf_eq, Fin.prod_univ_two] at hfsm hfc
+    have h0 : fsm.val 0 * fc.val 0 = t := by
+      have := congrFun (congrArg Subtype.val hpre) 0
+      simp only [labeledFactorizationMul] at this; exact this
+    have h1 : fsm.val 1 * fc.val 1 = t ^ (j - 1) := by
+      have := congrFun (congrArg Subtype.val hpre) 1
+      simp only [labeledFactorizationMul] at this; exact this
+    -- t is irreducible, so in fsm.val 0 * fc.val 0 = t, one factor is a unit
+    have ht_irr := ht; rw [Atoms, Set.mem_setOf_eq] at ht_irr
+    have hor := ht_irr.isUnit_or_isUnit h0.symm
+    cases hor with
+    | inl hfsm0_unit =>
+      -- fsm.val 0 is a unit, hence = 1 (reduced)
+      have hfsm0 : fsm.val 0 = 1 := h_reduced _ hfsm0_unit
+      rw [hfsm0, one_mul] at hfsm; rw [hfsm] at h1
+      -- h1: s^m * fc.val 1 = t^(j-1), so s | t^(j-1)
+      have hs_dvd_tj1 : s ∣ t ^ (j - 1) :=
+        dvd_trans (dvd_pow_self s (by omega : m ≠ 0)) ⟨fc.val 1, h1.symm⟩
+      -- StrictDvd(t^{j-1}, x) since x = t^j = t * t^{j-1} and t is not a unit
+      have h_strict_tj1 : StrictDvd (t ^ (j - 1)) x := by
+        refine ⟨t, ?_, ?_⟩
+        · rw [Atoms, Set.mem_setOf_eq] at ht; exact ht.not_isUnit
+        · conv_lhs => rw [hx]
+          have : t ^ j = t ^ (j - 1) * t := by
+            conv_lhs => rw [show j = j - 1 + 1 from by omega, pow_succ]
+          rw [this, mul_comm]
+      -- By WF IH on t^{j-1}: s = t, contradiction
+      exact h_neq (ih (t ^ (j - 1)) h_strict_tj1 t ht (j - 1) (by omega) rfl s hs hs_dvd_tj1)
+    | inr hfc0_unit =>
+      -- fc.val 0 is a unit, hence = 1 (reduced)
+      have hfc0 : fc.val 0 = 1 := h_reduced _ hfc0_unit
+      rw [hfc0, mul_one] at h0
+      -- h0: fsm.val 0 = t and hfsm: fsm.val 0 * fsm.val 1 = s^m
+      -- So t | s^m
+      have ht_dvd_sm : t ∣ s ^ m := ⟨fsm.val 1, by rw [← h0]; exact hfsm.symm⟩
+      -- By WF IH on s^m: t = s, contradiction
+      exact h_neq (ih (s ^ m) h_strict_sm s hs m hm_ge rfl t ht ht_dvd_sm).symm
 
-/-- Main theorem: CFI + CPL + UAB implies APD (Proposition 5.1). -/
+/-- Main theorem: CFI + CPL + UAB + ACCP implies APD (Proposition 5.1). -/
 theorem CFI_CPL_UAB_implies_APD (h_reduced : Reduced M) (h_atomic : Atomic M) :
-    CFI M → CPL M → UAB M → APD M := by
-  intro hcfi hcpl huab
+    CFI M → CPL M → UAB M → ACCP M → APD M := by
+  intro hcfi hcpl huab haccp
   rw [APD]
   intro p q hp hq k hdvd
   cases k with
@@ -215,6 +236,6 @@ theorem CFI_CPL_UAB_implies_APD (h_reduced : Reduced M) (h_atomic : Atomic M) :
     rw [Atoms, Set.mem_setOf_eq] at hq
     exact absurd (isUnit_of_dvd_one hdvd) hq.not_isUnit
   | succ k' =>
-    exact atom_dvd_pow_eq_with_UAB h_reduced h_atomic hcfi hcpl huab hp hq (k' + 1) (by omega) hdvd
+    exact atom_dvd_pow_eq_with_UAB h_reduced h_atomic hcfi hcpl huab haccp hp hq (k' + 1) (by omega) hdvd
 
 end
