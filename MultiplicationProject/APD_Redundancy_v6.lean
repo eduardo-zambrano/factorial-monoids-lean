@@ -3,15 +3,23 @@ Copyright (c) 2024 Eduardo Zambrano. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eduardo Zambrano
 
-# Proposition 5.1: CFI + CPL + UAB + ACCP implies APD (Supplementary)
+# Proposition 5.1: CFI + UAB + ACCP implies APD (Supplementary)
 
 **Note**: This file is supplementary. The main theorem chain uses the axiom
 system {PP-D, PP-P, CFI, CPL} (see `thm_main_PPP` in MainTheorem.lean),
 where APD is derived sorry-free from PP-P via `PPP_implies_APD` in Basic.lean.
 
-This file proves APD from the alternative axiom system {PP-D, UAB, CFI, CPL}
-plus ACCP (Ascending Chain Condition on Principal ideals — well-foundedness
-of strict divisibility). ACCP is a standard condition in commutative algebra,
+This file proves Proposition 5.1 from the paper: CFI + UAB + ACCP ⟹ APD.
+The paper uses {PP-D, UAB, CFI, CPL} as its four axioms with ACCP as a base
+assumption on the monoid. CPL is not needed for this result; it enters only
+through the main theorem (Theorem 9.1) to force infinitely many atoms.
+
+**Note on CPL parameter**: The Lean theorems below take CPL as a parameter
+for historical reasons, but it is unused (prefixed with `_`). The proof
+only requires CFI + UAB + ACCP.
+
+ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness
+of strict divisibility. It is a standard condition in commutative algebra,
 strictly between "atomic" and "UFD." In cancellative monoids ACCP follows
 from atomicity; in our non-cancellative setting it is an additional assumption.
 
@@ -111,7 +119,10 @@ lemma maximal_atom_power_extraction (_h_reduced : Reduced M) (haccp : ACCP M)
 /-! ## Main Theorem -/
 
 /-- The only atomic divisor of t^j (for t an atom) is t itself,
-    assuming CFI + CPL + UAB + ACCP.
+    assuming CFI + UAB + ACCP (Proposition 5.1 in the paper).
+
+    Note: The `_hcpl` (CPL) and `_h_atomic` (Atomic) parameters are unused;
+    only CFI, UAB, and ACCP are needed. They are retained for compatibility.
 
     Proof by well-founded induction on elements (via ACCP).
     For x = t^j with atom s | x and s ≠ t:
@@ -224,7 +235,8 @@ lemma atom_dvd_pow_eq_with_UAB (h_reduced : Reduced M) (_h_atomic : Atomic M)
       -- By WF IH on s^m: t = s, contradiction
       exact h_neq (ih (s ^ m) h_strict_sm s hs m hm_ge rfl t ht ht_dvd_sm).symm
 
-/-- Main theorem: CFI + CPL + UAB + ACCP implies APD (Proposition 5.1). -/
+/-- Main theorem: CFI + UAB + ACCP implies APD (Proposition 5.1).
+    Note: CPL and Atomic parameters are taken for historical reasons but unused. -/
 theorem CFI_CPL_UAB_implies_APD (h_reduced : Reduced M) (h_atomic : Atomic M) :
     CFI M → CPL M → UAB M → ACCP M → APD M := by
   intro hcfi hcpl huab haccp

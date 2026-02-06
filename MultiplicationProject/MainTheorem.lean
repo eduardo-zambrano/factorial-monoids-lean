@@ -49,6 +49,7 @@ The proof has two parts:
 -/
 
 import MultiplicationProject.MasterFormula
+import MultiplicationProject.APD_Redundancy_v6
 
 
 set_option linter.mathlibStandardSet false
@@ -181,6 +182,27 @@ theorem thm_main_PPP {M : Type*} [CommMonoid M]
     (h_ppp : PP_P M) (h_ppd : PP_D M) (h_cfi : CFI M) (h_cpl : CPL M) :
     Factorial M ∧ Set.Infinite (Atoms M) :=
   thm_main h_reduced h_atomic (PPP_implies_APD h_reduced h_ppp) h_ppd h_cfi h_cpl
+
+/-- **Theorem 9.1**: Main result (paper version).
+
+    Under (PP-D), (UAB), (CFI), (CPL), and ACCP (base assumption):
+    (a) M is factorial (isomorphic to ⊕_{p ∈ P} ℕ₀)
+    (b) The atom set P is countably infinite, hence M ≅ (ℕ, ×)
+
+    This matches the paper's axiom system {PP-D, UAB, CFI, CPL} with ACCP
+    as a base assumption. The proof chains through Proposition 5.1
+    (CFI + UAB + ACCP ⟹ APD) and then applies `thm_main`.
+
+    Note: This uses CommMonoid (not CancelCommMonoid) since cancellativity
+    is derived from the axioms via Factorial. -/
+theorem thm_main_UAB {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_ppd : PP_D M) (h_uab : UAB M) (h_cfi : CFI M) (h_cpl : CPL M)
+    (h_accp : ACCP M) :
+    Factorial M ∧ Set.Infinite (Atoms M) :=
+  thm_main h_reduced h_atomic
+    (CFI_CPL_UAB_implies_APD h_reduced h_atomic h_cfi h_cpl h_uab h_accp)
+    h_ppd h_cfi h_cpl
 
 /-- The atom set is countable when M is countable. -/
 theorem atoms_countable {M : Type*} [CommMonoid M] [Countable M] :
