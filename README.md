@@ -110,60 +110,46 @@ The Lean formalization's main theorem chain uses {PP-D, PP-P, CFI, CPL} and is *
 ## Logical Structure of the Proof
 
 ```
-                              AXIOMS
-                                |
-        +----------+----------+----------+
-        |          |          |          |
-      PP-D       PP-P        CFI        CPL
-        |          |          |          |
-        |          v          |          |
-        |    PPP_implies_APD  |          |
-        |          |          |          |
-        |          v          |          |
-        |         APD---------+          |
-        |          |          |          |
-        |          v          |          |
-        |   APD_implies_PPP   |          |
-        |     (Prop 5.2)      |          |
-        |          |          |          |
-        |          v          |          |
-        |        PP-P         |          |
-        |          |          |          |
-        +----+-----+         |          |
-             |                |          |
-             v                |          |
-      Lemma_PP_Unique         |          |
-        (Lemma 6.1)           |          |
-             |                |          |
-             v                v          |
-      Theorem_Local_SB  prop_coprime_mult|
-        (Thm 6.2)         (Prop 7.2)    |
-             |                |          |
-             +-------+--------+          |
-                     |                   |
-                     v                   |
-                thm_master               |
-                 (Thm 8.2)               |
-                     |                   |
-                     v                   |
-             prop_val_additive           |
-               (Prop 8.3)               |
-                     |                   |
-                     v                   |
-               cor_factorial             |
-                 (Cor 8.4)               |
-                     |                   |
-                     +--------+----------+
-                              |
-                              v
-                        thm_main_PPP
-                          (Thm 9.1)
-                         Factorial M
-                             AND
-                    Set.Infinite (Atoms M)
+Lean main chain (thm_main_PPP):       Paper chain (thm_main_UAB):
+
+      PP-D  PP-P  CFI  CPL            PP-D  UAB  CFI  CPL  ACCP
+        |    |     |    |               |    |    |    |     |
+        |    v     |    |               |    +----+----+-----+
+        | PPP_implies_APD               |    |
+        |    |     |    |               | CFI_CPL_UAB_implies_APD
+        |    v     |    |               |    |  (Prop 5.1)
+        |   APD----+    |               |    v
+        |    |          |               |   APD
+        |    v          |               |    |
+        | APD_implies_PPP               |    v
+        |  (Prop 5.2)  |               | APD_implies_PPP
+        |    |          |               |  (Prop 5.2)
+        |    v          |               |    |
+        |  PP-P         |               |    v
+        |    |          |               |  PP-P
+        +----+----+     |               +----+----+
+             |    |     |                    |    |
+             v    |     v                    v    v
+      Lemma_PP_Unique  prop_coprime_mult    (same from here)
+        (Lemma 6.1)      (Prop 7.2)
+             |                |
+             +-------+--------+
+                     |
+                     v
+                thm_master (Thm 8.2)
+                     |
+                     v
+             prop_val_additive (Prop 8.3)
+                     |
+                     v
+               cor_factorial (Cor 8.4)
+                     |
+                     v
+        thm_main_PPP / thm_main_UAB (Thm 9.1)
+              Factorial M ∧ Set.Infinite (Atoms M)
 ```
 
-The entire chain from {PP-D, PP-P, CFI, CPL} to the conclusion is sorry-free.
+Both chains are sorry-free. The paper uses `thm_main_UAB`; the Lean main chain uses `thm_main_PPP`.
 
 ## File Structure
 
@@ -176,7 +162,7 @@ The entire chain from {PP-D, PP-P, CFI, CPL} to the conclusion is sorry-free.
 | `LocalCharacterization.lean` | Section 6 | Local stars-and-bars (Theorem 6.2) |
 | `GlobalMultiplicativity.lean` | Section 7 | Coprime multiplicativity (Proposition 7.2) |
 | `MasterFormula.lean` | Section 8 | Master formula, valuation additivity, factorial structure |
-| `MainTheorem.lean` | Section 9 | Main theorem (Theorem 9.1) |
+| `MainTheorem.lean` | Section 9 | Main theorem (Theorem 9.1): `thm_main_UAB`, `thm_main_PPP` |
 
 ### Dependency Chain
 
@@ -190,7 +176,7 @@ Basic.lean (PP-D, PP-P, CFI, CPL definitions; PPP_implies_APD, APD_implies_UAB, 
             +-- LocalCharacterization.lean (Section 6: Theorem_Local_SB)
                  +-- GlobalMultiplicativity.lean (Section 7: prop_coprime_mult)
                       +-- MasterFormula.lean (Section 8: thm_master, cor_factorial)
-                           +-- MainTheorem.lean (Section 9: thm_main, thm_main_PPP)
+                           +-- MainTheorem.lean (Section 9: thm_main_UAB, thm_main_PPP)
 ```
 
 ## Necessity of Each Axiom
