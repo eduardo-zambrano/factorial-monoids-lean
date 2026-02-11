@@ -101,7 +101,7 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 
 `APD_Redundancy_v6.lean` proves Proposition 5.1 from the paper: CFI + UAB + ACCP ⟹ APD. The proof uses well-founded induction on elements (via ACCP).
 
-ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness of strict divisibility. It is a standard condition in commutative algebra, strictly between "atomic" and "UFD." In cancellative monoids, ACCP follows from atomicity; in the non-cancellative setting, it is an additional assumption. In the paper, ACCP is a base assumption on the monoid.
+ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness of strict divisibility. In cancellative monoids, ACCP follows from atomicity; in the non-cancellative setting, it is an additional assumption.
 
 ## Logical Structure of the Proof
 
