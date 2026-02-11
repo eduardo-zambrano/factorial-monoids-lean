@@ -106,37 +106,41 @@ ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness o
 ## Logical Structure of the Proof
 
 ```
-  PP-D  UAB  CFI  CPL  ACCP
-    |    |    |    |     |
-    |    +----+----+-----+
-    |    |
-    | CFI_UAB_implies_APD
-    |    |  (Prop 5.1)
-    |    v
-    |   APD
-    |    |
-    |    v
-    | APD_implies_PPP
-    |  (Prop 5.2)
-    |    |
-    |    v
-    |  PP-P
-    +----+----+
-         |    |
-         v    v
-  Lemma_PP_Unique  prop_coprime_mult
-    (Lemma 6.1)      (Prop 7.2)
-         |                |
-         +-------+--------+
-                 |
-                 v
-            thm_master (Thm 8.2)
-                 |
-                 v
-         prop_val_additive (Prop 8.3)
-                 |
-                 v
-           cor_factorial (Cor 8.4)
+  PP-D  UAB                 CFI      CPL
+    |    |                   |        |
+    |    +                   |        |
+    |    |                   |        |
+    | CFI_UAB_implies_APD    |        |
+    |    |  (Prop 5.1)       |        |
+    |    v                   |        |
+    |   APD                  |        |
+    |    |                   |        |
+    |    v                   |        |
+    | APD_implies_PPP        |        |
+    |  (Prop 5.2)            |        |
+    |    |                   |        |
+    |    v                   |        |
+    |  PP-P                  |        |
+    |    |                   |        |
+    |    v                   |        |
+    +----+                   |        |
+         |                   |        |
+         v                   v        |
+  Lemma_PP_Unique  prop_coprime_mult  |
+    (Lemma 6.1)      (Prop 7.2)       |
+         |                |           |
+         +-------+--------+           |
+                 |                    |
+                 v                    |
+            thm_master (Thm 8.2)      |
+                 |                    |
+                 v                    |
+         prop_val_additive (Prop 8.3) |
+                 |                    |
+                 v                    |
+           cor_factorial (Cor 8.4)    |
+                 |                    |
+                 +--------------------+
                  |
                  v
           thm_main_UAB (Thm 9.1)
