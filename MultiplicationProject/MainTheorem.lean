@@ -201,7 +201,7 @@ theorem thm_main_UAB {M : Type*} [CommMonoid M]
     (h_accp : ACCP M) :
     Factorial M ∧ Set.Infinite (Atoms M) :=
   thm_main h_reduced h_atomic
-    (CFI_CPL_UAB_implies_APD h_reduced h_atomic h_cfi h_cpl h_uab h_accp)
+    (CFI_UAB_implies_APD h_reduced h_cfi h_uab h_accp)
     h_ppd h_cfi h_cpl
 
 /-- The atom set is countable when M is countable. -/

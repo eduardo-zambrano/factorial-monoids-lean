@@ -6,9 +6,22 @@ A Lean 4 formalization of the paper "Characterizing Factorial Monoids via Labele
 
 This project formalizes a characterization of ordinary multiplication on natural numbers using only counting properties of labeled factorizations. The main theorem (Theorem 9.1) shows that a reduced atomic commutative monoid satisfying ACCP and four simple axioms is factorial with infinitely many atoms, hence isomorphic to (N, x).
 
+## Base Assumptions
+
+Throughout, (M, ·, 1) is a monoid satisfying the following base assumptions:
+
+| Base Assumption | Description |
+|-----------------|-------------|
+| **Commutative** | The monoid operation is commutative (a · b = b · a) |
+| **Reduced** | The only unit is the identity element |
+| **Atomic** | Every non-unit can be written as a finite product of atoms |
+| **ACCP** | Ascending chain condition on principal ideals: no infinite chain a₁ ≻ a₂ ≻ a₃ ≻ ⋯ under strict divisibility |
+
+We do *not* assume cancellativity. Instead, cancellativity is *derived* as a consequence of factorial structure (Corollary 8.4).
+
 ## The Four Axioms
 
-The paper characterizes factorial monoids using four axioms, with ACCP (ascending chain condition on principal ideals) as a base assumption on the monoid:
+The paper characterizes factorial monoids using four axioms on top of the base assumptions:
 
 | Axiom | Name | Description |
 |-------|------|-------------|
@@ -24,9 +37,7 @@ The paper characterizes factorial monoids using four axioms, with ACCP (ascendin
 | **APD** | Atom-Power-Divisibility | If atom q divides p^k (p an atom), then q = p |
 | **PP-P** | Prime-Powers-Pure | Prime-power submonoid ⟨p⟩ is factorially closed |
 
-**Key equivalences**: PP-P ⟺ APD ⟺ UAB (given CFI + ACCP). Specifically: PP-P ⟹ APD (`PPP_implies_APD`), APD ⟹ UAB (`APD_implies_UAB`), APD ⟹ PP-P (`APD_implies_PPP`), and CFI + UAB + ACCP ⟹ APD (`CFI_CPL_UAB_implies_APD`).
-
-We do *not* assume cancellativity. Instead, cancellativity is *derived* as a consequence of factorial structure (Corollary 8.4).
+**Key equivalences**: PP-P ⟺ APD ⟺ UAB (given CFI + ACCP). Specifically: PP-P ⟹ APD (`PPP_implies_APD`), APD ⟹ UAB (`APD_implies_UAB`), APD ⟹ PP-P (`APD_implies_PPP`), and CFI + UAB + ACCP ⟹ APD (`CFI_UAB_implies_APD`).
 
 ## Main Results
 
@@ -42,7 +53,7 @@ theorem thm_main_UAB {M : Type*} [CommMonoid M]
     Factorial M ∧ Set.Infinite (Atoms M)
 ```
 
-This chains through Proposition 5.1 (`CFI_CPL_UAB_implies_APD`) to derive APD from CFI + UAB + ACCP, then feeds into the main proof.
+This chains through Proposition 5.1 (`CFI_UAB_implies_APD`) to derive APD from CFI + UAB + ACCP, then feeds into the main proof.
 
 Alternative version using the derived property PP-P directly (does not require ACCP as an explicit assumption):
 
@@ -74,7 +85,7 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 | Paper Ref | Name | Lean Name | Status |
 |-----------|------|-----------|--------|
 | **Section 5: Deriving APD and Local Purity** |
-| Prop 5.1 | CFI + UAB + ACCP => APD | `CFI_CPL_UAB_implies_APD` | Complete (CPL parameter unused) |
+| Prop 5.1 | CFI + UAB + ACCP => APD | `CFI_UAB_implies_APD` | Complete |
 | Prop 5.2 | APD => PP-P | `APD_implies_PPP` | Complete |
 | -- | PP-P => APD | `PPP_implies_APD` | Complete |
 | -- | APD => UAB | `APD_implies_UAB` | Complete |
@@ -99,7 +110,7 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 
 ### Note on Proposition 5.1
 
-`APD_Redundancy_v6.lean` proves Proposition 5.1 from the paper: CFI + UAB + ACCP ⟹ APD. The proof uses well-founded induction on elements (via ACCP). The Lean theorem `CFI_CPL_UAB_implies_APD` takes CPL as a parameter for historical reasons, but CPL is unused in the proof (the parameter is prefixed with `_`).
+`APD_Redundancy_v6.lean` proves Proposition 5.1 from the paper: CFI + UAB + ACCP ⟹ APD. The proof uses well-founded induction on elements (via ACCP).
 
 ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness of strict divisibility. It is a standard condition in commutative algebra, strictly between "atomic" and "UFD." In cancellative monoids, ACCP follows from atomicity; in the non-cancellative setting, it is an additional assumption. In the paper, ACCP is a base assumption on the monoid.
 
@@ -114,7 +125,7 @@ Paper chain (thm_main_UAB):             Alternative chain (thm_main_PPP):
     |    |    |    |     |                   |    |     |    |
     |    +----+----+-----+                   |    v     |    |
     |    |                                   | PPP_implies_APD
-    | CFI_CPL_UAB_implies_APD                |    |     |    |
+    | CFI_UAB_implies_APD                |    |     |    |
     |    |  (Prop 5.1)                       |    v     |    |
     |    v                                   |   APD----+    |
     |   APD                                  |    |          |
@@ -154,7 +165,7 @@ Both chains are sorry-free. The paper uses `thm_main_UAB`; `thm_main_PPP` is an 
 | File | Paper Section | Description |
 |------|---------------|-------------|
 | `Basic.lean` | Sections 2-3 | Core definitions (PP-D, UAB, CFI, CPL, PP-P, APD), PPP_implies_APD, APD_implies_UAB, APD_implies_PPP, StrictDvd, ACCP |
-| `APD_Redundancy_v6.lean` | Section 5 | CFI + UAB + ACCP => APD (Prop 5.1; CPL param unused) |
+| `APD_Redundancy_v6.lean` | Section 5 | CFI + UAB + ACCP => APD (Prop 5.1) |
 | `Utilities.lean` | -- | Transfer lemmas, support properties |
 | `LocalPurity.lean` | Section 5 | Helper lemmas for coprimality and blockwise CFI |
 | `LocalCharacterization.lean` | Section 6 | Local stars-and-bars (Theorem 6.2) |
