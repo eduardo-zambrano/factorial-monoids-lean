@@ -15,7 +15,7 @@ Throughout, (M, ·, 1) is a monoid satisfying the following base assumptions:
 | **Commutative** | The monoid operation is commutative (a · b = b · a) |
 | **Reduced** | The only unit is the identity element |
 | **Atomic** | Every non-unit can be written as a finite product of atoms |
-| **ACCP** | Ascending chain condition on principal ideals: no infinite chain a₁ ≻ a₂ ≻ a₃ ≻ ⋯ under strict divisibility |
+| **ACCP** | Ascending chain condition on principal ideals: there is no infinite sequence m₁, m₂, … in M such that each mᵢ₊₁ strictly divides mᵢ |
 
 We do *not* assume cancellativity. Instead, cancellativity is *derived* as a consequence of factorial structure (Corollary 8.4).
 
@@ -53,18 +53,7 @@ theorem thm_main_UAB {M : Type*} [CommMonoid M]
     Factorial M ∧ Set.Infinite (Atoms M)
 ```
 
-This chains through Proposition 5.1 (`CFI_UAB_implies_APD`) to derive APD from CFI + UAB + ACCP, then feeds into the main proof.
-
-Alternative version using the derived property PP-P directly (does not require ACCP as an explicit assumption):
-
-```lean
-theorem thm_main_PPP {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppp : PP_P M) (h_ppd : PP_D M) (h_cfi : CFI M) (h_cpl : CPL M) :
-    Factorial M ∧ Set.Infinite (Atoms M)
-```
-
-Both are sorry-free.
+This chains through Proposition 5.1 (`CFI_UAB_implies_APD`) to derive APD from CFI + UAB + ACCP, then feeds into the main proof. The code also contains an internal variant `thm_main_PPP` that takes the derived property PP-P directly; this is a stepping stone in the proof chain, not a separate axiom system.
 
 ### Master Counting Formula (Theorem 8.2)
 
@@ -102,7 +91,7 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 | Prop 8.3 | Valuation additivity | `prop_val_additive` | Complete |
 | Cor 8.4 | Factorial structure | `cor_factorial` | Complete |
 | **Section 9: Main Theorem** |
-| **Thm 9.1** | **Main result: M isomorphic to (N, x)** | `thm_main_UAB` / `thm_main_PPP` | Complete |
+| **Thm 9.1** | **Main result: M isomorphic to (N, x)** | `thm_main_UAB` | Complete |
 | **Additional Results** |
 | -- | Atoms are prime under APD + CFI | `atoms_are_prime_APD` | Complete |
 | -- | CPL implies atoms are infinite | `atoms_infinite_of_CPL` | Complete |
@@ -114,51 +103,45 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 
 ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness of strict divisibility. It is a standard condition in commutative algebra, strictly between "atomic" and "UFD." In cancellative monoids, ACCP follows from atomicity; in the non-cancellative setting, it is an additional assumption. In the paper, ACCP is a base assumption on the monoid.
 
-The alternative theorem `thm_main_PPP` takes PP-P directly as a hypothesis (instead of UAB + ACCP), bypassing Proposition 5.1. Since PP-P ⟹ APD is proven without ACCP (`PPP_implies_APD` in Basic.lean), `thm_main_PPP` does not require ACCP as an explicit assumption.
-
 ## Logical Structure of the Proof
 
 ```
-Paper chain (thm_main_UAB):             Alternative chain (thm_main_PPP):
-
-  PP-D  UAB  CFI  CPL  ACCP               PP-D  PP-P  CFI  CPL
-    |    |    |    |     |                   |    |     |    |
-    |    +----+----+-----+                   |    v     |    |
-    |    |                                   | PPP_implies_APD
-    | CFI_UAB_implies_APD                |    |     |    |
-    |    |  (Prop 5.1)                       |    v     |    |
-    |    v                                   |   APD----+    |
-    |   APD                                  |    |          |
-    |    |                                   |    v          |
-    |    v                                   | APD_implies_PPP
-    | APD_implies_PPP                        |  (Prop 5.2)  |
-    |  (Prop 5.2)                            |    |          |
-    |    |                                   |    v          |
-    |    v                                   |  PP-P         |
-    |  PP-P                                  |    |          |
-    +----+----+                              +----+----+     |
-         |    |                                   |    |     |
-         v    v                                   v    |     v
-  Lemma_PP_Unique  prop_coprime_mult       Lemma_PP_Unique  prop_coprime_mult
-    (Lemma 6.1)      (Prop 7.2)              (Lemma 6.1)      (Prop 7.2)
-         |                |                       |                |
-         +-------+--------+                      +-------+--------+
-                 |                                        |
-                 v                                        v
-            thm_master (Thm 8.2)                     thm_master (Thm 8.2)
-                 |                                        |
-                 v                                        v
-         prop_val_additive (Prop 8.3)             prop_val_additive (Prop 8.3)
-                 |                                        |
-                 v                                        v
-           cor_factorial (Cor 8.4)                  cor_factorial (Cor 8.4)
-                 |                                        |
-                 v                                        v
-          thm_main_UAB (Thm 9.1)                  thm_main_PPP (Thm 9.1)
-          Factorial M ∧ Set.Infinite (Atoms M)    Factorial M ∧ Set.Infinite (Atoms M)
+  PP-D  UAB  CFI  CPL  ACCP
+    |    |    |    |     |
+    |    +----+----+-----+
+    |    |
+    | CFI_UAB_implies_APD
+    |    |  (Prop 5.1)
+    |    v
+    |   APD
+    |    |
+    |    v
+    | APD_implies_PPP
+    |  (Prop 5.2)
+    |    |
+    |    v
+    |  PP-P
+    +----+----+
+         |    |
+         v    v
+  Lemma_PP_Unique  prop_coprime_mult
+    (Lemma 6.1)      (Prop 7.2)
+         |                |
+         +-------+--------+
+                 |
+                 v
+            thm_master (Thm 8.2)
+                 |
+                 v
+         prop_val_additive (Prop 8.3)
+                 |
+                 v
+           cor_factorial (Cor 8.4)
+                 |
+                 v
+          thm_main_UAB (Thm 9.1)
+          Factorial M ∧ Set.Infinite (Atoms M)
 ```
-
-Both chains are sorry-free. The paper uses `thm_main_UAB`; `thm_main_PPP` is an alternative that takes PP-P directly.
 
 ## File Structure
 
@@ -171,7 +154,7 @@ Both chains are sorry-free. The paper uses `thm_main_UAB`; `thm_main_PPP` is an 
 | `LocalCharacterization.lean` | Section 6 | Local stars-and-bars (Theorem 6.2) |
 | `GlobalMultiplicativity.lean` | Section 7 | Coprime multiplicativity (Proposition 7.2) |
 | `MasterFormula.lean` | Section 8 | Master formula, valuation additivity, factorial structure |
-| `MainTheorem.lean` | Section 9 | Main theorem (Theorem 9.1): `thm_main_UAB`, `thm_main_PPP` |
+| `MainTheorem.lean` | Section 9 | Main theorem (Theorem 9.1): `thm_main_UAB` |
 
 ### Dependency Chain
 
@@ -185,7 +168,7 @@ Basic.lean (PP-D, UAB, CFI, CPL, PP-P, APD definitions; PPP_implies_APD, APD_imp
             +-- LocalCharacterization.lean (Section 6: Theorem_Local_SB)
                  +-- GlobalMultiplicativity.lean (Section 7: prop_coprime_mult)
                       +-- MasterFormula.lean (Section 8: thm_master, cor_factorial)
-                           +-- MainTheorem.lean (Section 9: thm_main_UAB, thm_main_PPP)
+                           +-- MainTheorem.lean (Section 9: thm_main_UAB)
 ```
 
 ## Necessity of Each Axiom
