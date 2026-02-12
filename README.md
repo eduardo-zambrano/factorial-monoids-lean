@@ -92,6 +92,11 @@ This establishes the explicit counting formula F_k(m) = prod_p C(v_p(m)+k-1, k-1
 | Cor 8.4 | Factorial structure | `cor_factorial` | Complete |
 | **Section 9: Main Theorem** |
 | **Thm 9.1** | **Main result: M isomorphic to (N, x)** | `thm_main_UAB` | Complete |
+| **Section 10: Independence of the Axioms** |
+| Ex 10.1 | PP-D fails (collapsing monoid) | `collapsing_not_PPD` | Complete |
+| Ex 10.2 | UAB fails (p₁² = p₂² monoid) | `uabfail_not_UAB` | Complete |
+| Ex 10.3 | CFI fails (pq = uv monoid) | `cfifail_not_CFI` | Complete |
+| Ex 10.4 | CPL fails (Peano monoid) | `peano_not_CPL` | Complete |
 | **Additional Results** |
 | -- | Atoms are prime under APD + CFI | `atoms_are_prime_APD` | Complete |
 | -- | CPL implies atoms are infinite | `atoms_infinite_of_CPL` | Complete |
@@ -159,6 +164,10 @@ ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness o
 | `GlobalMultiplicativity.lean` | Section 7 | Coprime multiplicativity (Proposition 7.2) |
 | `MasterFormula.lean` | Section 8 | Master formula, valuation additivity, factorial structure |
 | `MainTheorem.lean` | Section 9 | Main theorem (Theorem 9.1): `thm_main_UAB` |
+| `Examples/CollapsingMonoid.lean` | Section 10 | Ex 10.1: PP-D fails, UAB+CFI+CPL hold |
+| `Examples/UABFailMonoid.lean` | Section 10 | Ex 10.2: UAB fails, PP-D+CFI+CPL hold |
+| `Examples/CFIFailMonoid.lean` | Section 10 | Ex 10.3: CFI fails, PP-D+UAB+CPL hold |
+| `Examples/PeanoMonoid.lean` | Section 10 | Ex 10.4: CPL fails, PP-D+UAB+CFI hold |
 
 ### Dependency Chain
 
@@ -177,11 +186,16 @@ Basic.lean (PP-D, UAB, CFI, CPL, PP-P, APD definitions; PPP_implies_APD, APD_imp
 
 ## Necessity of Each Axiom
 
-The paper (Section 10) constructs explicit counterexamples showing each axiom is necessary. Each example satisfies ACCP:
-- **Failure of PP-D only**: Collapsing prime-power towers (e.g., p^2 = p^3)
-- **Failure of UAB only**: Distinct atoms with equal powers (e.g., p^2 = q^2)
-- **Failure of CFI only**: Spurious coprime factorizations
-- **Failure of CPL only**: Finite atom sets (e.g., Peano monoid)
+The paper (Section 10) constructs explicit counterexamples showing each axiom is necessary. All four are formalized in Lean and verified sorry-free:
+
+| Axiom that fails | Monoid | Lean file | Key theorem |
+|------------------|--------|-----------|-------------|
+| **PP-D** | Collapsing towers (p^2 = p^3) | `Examples/CollapsingMonoid.lean` | `collapsing_not_PPD` |
+| **UAB** | Cross-atom identification (p₁² = p₂²) | `Examples/UABFailMonoid.lean` | `uabfail_not_UAB` |
+| **CFI** | Spurious coprime factorizations (pq = uv) | `Examples/CFIFailMonoid.lean` | `cfifail_not_CFI` |
+| **CPL** | Peano monoid (single atom) | `Examples/PeanoMonoid.lean` | `peano_not_CPL` |
+
+Each example also formally verifies that the other three axioms hold (e.g., `collapsing_UAB`, `collapsing_CFI`, `collapsing_CPL` for the PP-D counterexample).
 
 ## Building
 
