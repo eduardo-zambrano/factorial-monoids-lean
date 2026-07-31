@@ -286,7 +286,7 @@ theorem R_atoms_not_countable : ¬(Atoms M).Countable := by
 
 /-- CPL⁺ FAILS — derived from the characterization theorem: if CPL⁺ held,
     the atom set would be countable, contradicting uncountability. -/
-theorem R_not_cpl_plus : ¬CCA M := by
+theorem R_not_CCA : ¬CCA M := by
   intro h
   have hres := (thm_characterization R_reduced R_atomic R_wfd).mp
     ⟨R_tf, R_td, R_cfi, h⟩
@@ -302,6 +302,6 @@ theorem uncountable_example :
     Reduced M ∧ Atomic M ∧ WFD M ∧ Factorial M ∧
     TowerFaithful M ∧ TD M ∧ CFI M ∧ CPL M ∧ ¬CCA M :=
   ⟨R_reduced, R_atomic, R_wfd, R_factorial, R_tf, R_td, R_cfi, R_cpl,
-   R_not_cpl_plus⟩
+   R_not_CCA⟩
 
 end UncountableFreeMonoidExample
