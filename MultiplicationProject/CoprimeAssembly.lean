@@ -10,13 +10,13 @@ This file proves that factorization counts are multiplicative on coprime inputs.
 Main results:
 - `prop_coprime_mult`: F_k(x·y) = F_k(x)·F_k(y) for coprime x, y (Proposition 7.2)
 
-Note: Corollary 7.3 (squarefree diagnostic) is deferred to MasterFormula.lean
+Note: Corollary 7.3 (squarefree diagnostic) is deferred to FactorialStructure.lean
 where h_prime_atoms can be derived rather than assumed.
 
 Formalized with assistance from Aristotle (uuid: 62b9b7ab-c8d3-4520-b982-52cb3d7e73ba)
 -/
 
-import MultiplicationProject.LocalCharacterization
+import MultiplicationProject.LocalCounting
 
 set_option linter.mathlibStandardSet false
 
@@ -239,5 +239,197 @@ theorem prop_coprime_mult {M : Type*} [CommMonoid M]
     any_goals intro f; exact h_finite _ _
     any_goals exact h_finite _ _
     simp +decide only [← Finset.mul_sum _ _ _, ← Finset.sum_mul]
+
+
+/-!
+## CFI extends to all k
+
+The coordinatewise assembly μ_k is a bijection for every k ≥ 1, by induction
+from the k = 2 case postulated by CFI. This is the paper's Lemma
+"CFI extends to all k". (The case k = 0 is excluded: without reducedness a
+unit x ≠ 1 has no 0-factorization while x · x⁻¹ = 1 has one.)
+-/
+
+/-- **CFI extends to all k**: for coprime x, y and every k, the coordinatewise
+    map μ_{k+1} : F_{k+1}(x) × F_{k+1}(y) → F_{k+1}(xy) is a bijection. -/
+theorem CFI_bijective_all_k {M : Type*} [CommMonoid M] (h_cfi : CFI M) :
+    ∀ (k : ℕ) {x y : M}, AreCoprime x y →
+    Function.Bijective
+      (fun p : LabeledFactorizations (k+1) x × LabeledFactorizations (k+1) y =>
+        labeledFactorizationMul p.1 p.2) := by
+  intro k
+  induction k with
+  | zero =>
+    intro x y _
+    constructor
+    · rintro ⟨⟨f, hf⟩, ⟨g, hg⟩⟩ ⟨⟨f', hf'⟩, ⟨g', hg'⟩⟩ _
+      simp only [LabeledFactorizations, Set.mem_setOf_eq, Fin.prod_univ_succ,
+        Fin.prod_univ_zero, mul_one] at hf hg hf' hg'
+      refine Prod.ext ?_ ?_ <;> apply Subtype.ext <;> funext i
+      · show f i = f' i
+        have hi : i = 0 := by omega
+        subst hi
+        rw [hf, hf']
+      · show g i = g' i
+        have hi : i = 0 := by omega
+        subst hi
+        rw [hg, hg']
+    · rintro ⟨w, hw⟩
+      simp only [LabeledFactorizations, Set.mem_setOf_eq, Fin.prod_univ_succ,
+        Fin.prod_univ_zero, mul_one] at hw
+      refine ⟨(⟨fun _ => x, ?_⟩, ⟨fun _ => y, ?_⟩), ?_⟩
+      · simp [LabeledFactorizations, Fin.prod_univ_succ]
+      · simp [LabeledFactorizations, Fin.prod_univ_succ]
+      · apply Subtype.ext
+        funext i
+        have hi : i = 0 := by omega
+        subst hi
+        simp only [labeledFactorizationMul, Pi.mul_apply]
+        exact hw.symm
+  | succ k ih =>
+    intro x y hxy
+    have hprod2 : ∀ (u : Fin 2 → M) (m : M), u ∈ LabeledFactorizations 2 m →
+        u 0 * u 1 = m := by
+      intro u m hu
+      simpa [LabeledFactorizations, Fin.prod_univ_two] using hu
+    have hsplit : ∀ (u : Fin (k+2) → M) (m : M),
+        Finset.univ.prod u = m →
+        u 0 * Finset.univ.prod (Fin.tail u) = m := by
+      intro u m hu
+      rw [← hu]
+      exact (Fin.prod_univ_succ u).symm
+    constructor
+    · -- injectivity
+      rintro ⟨⟨f, hf⟩, ⟨g, hg⟩⟩ ⟨⟨f', hf'⟩, ⟨g', hg'⟩⟩ heq
+      have hval : ∀ i, f i * g i = f' i * g' i := by
+        intro i
+        have h1 := congrArg (fun z => z.val i) heq
+        simpa [labeledFactorizationMul] using h1
+      simp only [LabeledFactorizations, Set.mem_setOf_eq] at hf hg hf' hg'
+      have hFf : (![f 0, Finset.univ.prod (Fin.tail f)]) ∈
+          LabeledFactorizations 2 x := by
+        simp [LabeledFactorizations, Fin.prod_univ_two, hsplit f x hf]
+      have hFg : (![g 0, Finset.univ.prod (Fin.tail g)]) ∈
+          LabeledFactorizations 2 y := by
+        simp [LabeledFactorizations, Fin.prod_univ_two, hsplit g y hg]
+      have hFf' : (![f' 0, Finset.univ.prod (Fin.tail f')]) ∈
+          LabeledFactorizations 2 x := by
+        simp [LabeledFactorizations, Fin.prod_univ_two, hsplit f' x hf']
+      have hFg' : (![g' 0, Finset.univ.prod (Fin.tail g')]) ∈
+          LabeledFactorizations 2 y := by
+        simp [LabeledFactorizations, Fin.prod_univ_two, hsplit g' y hg']
+      have htailprod : Finset.univ.prod (Fin.tail f) * Finset.univ.prod (Fin.tail g)
+          = Finset.univ.prod (Fin.tail f') * Finset.univ.prod (Fin.tail g') := by
+        rw [← Finset.prod_mul_distrib, ← Finset.prod_mul_distrib]
+        apply Finset.prod_congr rfl
+        intro i _
+        exact hval i.succ
+      have h2eq : (fun p : LabeledFactorizations 2 x × LabeledFactorizations 2 y =>
+          labeledFactorizationMul p.1 p.2) (⟨_, hFf⟩, ⟨_, hFg⟩)
+          = (fun p : LabeledFactorizations 2 x × LabeledFactorizations 2 y =>
+          labeledFactorizationMul p.1 p.2) (⟨_, hFf'⟩, ⟨_, hFg'⟩) := by
+        apply Subtype.ext
+        funext i
+        fin_cases i
+        · simpa [labeledFactorizationMul, Pi.mul_apply] using hval 0
+        · simpa [labeledFactorizationMul, Pi.mul_apply] using htailprod
+      have h4 := (h_cfi x y hxy).1 h2eq
+      have hf0 : f 0 = f' 0 := by
+        have := congrArg (fun z => z.1.val 0) h4
+        simpa using this
+      have hg0 : g 0 = g' 0 := by
+        have := congrArg (fun z => z.2.val 0) h4
+        simpa using this
+      have hTf : Finset.univ.prod (Fin.tail f) = Finset.univ.prod (Fin.tail f') := by
+        have := congrArg (fun z => z.1.val 1) h4
+        simpa using this
+      have hTg : Finset.univ.prod (Fin.tail g) = Finset.univ.prod (Fin.tail g') := by
+        have := congrArg (fun z => z.2.val 1) h4
+        simpa using this
+      have hcop : AreCoprime (Finset.univ.prod (Fin.tail f))
+          (Finset.univ.prod (Fin.tail g)) := by
+        refine AreCoprime_of_dvd hxy ⟨f 0, ?_⟩ ⟨g 0, ?_⟩
+        · rw [mul_comm]; exact (hsplit f x hf).symm
+        · rw [mul_comm]; exact (hsplit g y hg).symm
+      have hmemf : Fin.tail f ∈ LabeledFactorizations (k+1)
+          (Finset.univ.prod (Fin.tail f)) := rfl
+      have hmemg : Fin.tail g ∈ LabeledFactorizations (k+1)
+          (Finset.univ.prod (Fin.tail g)) := rfl
+      have hmemf' : Fin.tail f' ∈ LabeledFactorizations (k+1)
+          (Finset.univ.prod (Fin.tail f)) := by
+        simp only [LabeledFactorizations, Set.mem_setOf_eq]
+        exact hTf.symm
+      have hmemg' : Fin.tail g' ∈ LabeledFactorizations (k+1)
+          (Finset.univ.prod (Fin.tail g)) := by
+        simp only [LabeledFactorizations, Set.mem_setOf_eq]
+        exact hTg.symm
+      have hiheq : (fun p : LabeledFactorizations (k+1) (Finset.univ.prod (Fin.tail f))
+            × LabeledFactorizations (k+1) (Finset.univ.prod (Fin.tail g)) =>
+          labeledFactorizationMul p.1 p.2) (⟨_, hmemf⟩, ⟨_, hmemg⟩)
+          = (fun p : LabeledFactorizations (k+1) (Finset.univ.prod (Fin.tail f))
+            × LabeledFactorizations (k+1) (Finset.univ.prod (Fin.tail g)) =>
+          labeledFactorizationMul p.1 p.2) (⟨_, hmemf'⟩, ⟨_, hmemg'⟩) := by
+        apply Subtype.ext
+        funext i
+        simp only [labeledFactorizationMul, Pi.mul_apply]
+        exact hval i.succ
+      have h5 := (ih hcop).1 hiheq
+      have htf : Fin.tail f = Fin.tail f' := by
+        have := congrArg (fun z => z.1.val) h5
+        simpa using this
+      have htg : Fin.tail g = Fin.tail g' := by
+        have := congrArg (fun z => z.2.val) h5
+        simpa using this
+      refine Prod.ext ?_ ?_ <;> apply Subtype.ext <;> funext i <;>
+        refine Fin.cases ?_ (fun j => ?_) i
+      · exact hf0
+      · exact congrFun htf j
+      · exact hg0
+      · exact congrFun htg j
+    · -- surjectivity
+      rintro ⟨w, hw⟩
+      simp only [LabeledFactorizations, Set.mem_setOf_eq] at hw
+      have hw2 : w 0 * Finset.univ.prod (Fin.tail w) = x * y := hsplit w (x * y) hw
+      obtain ⟨⟨⟨a, ha⟩, ⟨b, hb⟩⟩, hab⟩ := (h_cfi x y hxy).2
+        ⟨![w 0, Finset.univ.prod (Fin.tail w)], by
+          simp [LabeledFactorizations, Fin.prod_univ_two, hw2]⟩
+      have hab0 : a 0 * b 0 = w 0 := by
+        have := congrArg (fun z => z.val 0) hab
+        simpa [labeledFactorizationMul] using this
+      have hab1 : a 1 * b 1 = Finset.univ.prod (Fin.tail w) := by
+        have := congrArg (fun z => z.val 1) hab
+        simpa [labeledFactorizationMul] using this
+      have ha2 : a 0 * a 1 = x := hprod2 a x ha
+      have hb2 : b 0 * b 1 = y := hprod2 b y hb
+      have hcop : AreCoprime (a 1) (b 1) := by
+        refine AreCoprime_of_dvd hxy ⟨a 0, ?_⟩ ⟨b 0, ?_⟩
+        · rw [mul_comm]; exact ha2.symm
+        · rw [mul_comm]; exact hb2.symm
+      have hmemw : Fin.tail w ∈ LabeledFactorizations (k+1) (a 1 * b 1) := by
+        simp only [LabeledFactorizations, Set.mem_setOf_eq]
+        exact hab1.symm
+      obtain ⟨⟨⟨fx, hfx⟩, ⟨fy, hfy⟩⟩, hfxy⟩ := (ih hcop).2 ⟨Fin.tail w, hmemw⟩
+      simp only [LabeledFactorizations, Set.mem_setOf_eq] at hfx hfy
+      have hfxyval : ∀ i, fx i * fy i = Fin.tail w i := by
+        intro i
+        have := congrArg (fun z => z.val i) hfxy
+        simpa [labeledFactorizationMul] using this
+      refine ⟨(⟨Fin.cons (a 0) fx, ?_⟩, ⟨Fin.cons (b 0) fy, ?_⟩), ?_⟩
+      · show Finset.univ.prod (Fin.cons (a 0) fx) = x
+        rw [Fin.prod_univ_succ]
+        simp only [Fin.cons_zero, Fin.cons_succ]
+        rw [hfx]
+        exact ha2
+      · show Finset.univ.prod (Fin.cons (b 0) fy) = y
+        rw [Fin.prod_univ_succ]
+        simp only [Fin.cons_zero, Fin.cons_succ]
+        rw [hfy]
+        exact hb2
+      · apply Subtype.ext
+        funext i
+        simp only [labeledFactorizationMul, Pi.mul_apply]
+        refine Fin.cases ?_ (fun j => ?_) i
+        · simpa [Fin.cons_zero] using hab0
+        · simpa [Fin.cons_succ] using hfxyval j
 
 end

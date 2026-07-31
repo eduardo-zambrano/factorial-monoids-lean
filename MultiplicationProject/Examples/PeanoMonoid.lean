@@ -16,7 +16,7 @@ The Peano monoid is (ℕ+, ⋆, 1) where x ⋆ y := x + y - 1.
 - `peano_reduced`: The Peano monoid is reduced
 - `peano_atomic`: The Peano monoid is atomic (unique atom: 2)
 - `peano_APD`: The Peano monoid satisfies APD
-- `peano_PPD`: The Peano monoid satisfies PP-D
+- `peano_tower_faithful`: The Peano monoid satisfies tower faithfulness
 - `peano_CFI`: The Peano monoid satisfies CFI (vacuously)
 - `peano_not_CPL`: The Peano monoid does NOT satisfy CPL
 -/
@@ -303,15 +303,15 @@ theorem peano_APD : APD PeanoNat := by
   simp only [Set.mem_singleton_iff] at hp hq
   rw [hp, hq]
 
-/-- UAB holds vacuously: with only one atom, p^k = q^m implies p = q = 2. -/
-theorem peano_UAB : UAB PeanoNat := by
+/-- TD holds vacuously: with only one atom, p^k = q^m implies p = q = 2. -/
+theorem peano_TD : TD PeanoNat := by
   intro p q hp hq k m _ _ _
   rw [atoms_eq] at hp hq
   simp only [Set.mem_singleton_iff] at hp hq
   rw [hp, hq]
 
-/-- PP-D holds: 2^e = e + 1 is injective. -/
-theorem peano_PPD : PP_D PeanoNat := by
+/-- tower faithfulness holds: 2^e = e + 1 is injective. -/
+theorem peano_tower_faithful : TowerFaithful PeanoNat := by
   intro p hp a b hab
   rw [atoms_eq] at hp
   simp only [Set.mem_singleton_iff] at hp
@@ -461,6 +461,33 @@ theorem peano_not_CPL : ¬ CPL PeanoNat := by
   -- So hcoprime two h2_atom h2_dvd_m1 gives ¬ (two ∣ m₂)
   -- And h2_dvd_m2 gives two ∣ m₂, so we have False
   exact hcoprime two h2_atom h2_dvd_m1 h2_dvd_m2
+
+/-! ## WFD holds -/
+
+/-- WFD holds: strict divisibility strictly increases the value, since a
+    non-unit cofactor has value at least 2 and x ⋆ c has value
+    x.val + c.val − 1. -/
+theorem peano_WFD : WFD PeanoNat := by
+  have hsub : Subrelation (fun a b : PeanoNat => StrictDvd a b)
+      (InvImage (· < ·) (fun x : PeanoNat => x.val)) := by
+    intro a b hab
+    obtain ⟨c, hc_unit, rfl⟩ := hab
+    have hc2 : 2 ≤ c.val := by
+      have h1 : c.val ≠ 1 := fun h =>
+        hc_unit ((isUnit_iff c).mpr (by ext; simpa using h))
+      have := c.pos
+      omega
+    show a.val < (a * c).val
+    rw [mul_val]
+    have := a.pos
+    omega
+  exact Subrelation.wf hsub (InvImage.wf _ Nat.lt_wfRel.wf)
+
+/-! ## CPL⁺ fails (a fortiori) -/
+
+/-- CPL⁺ fails: it implies CPL, which already fails. -/
+theorem peano_not_CCA : ¬ CCA PeanoNat :=
+  fun h => peano_not_CPL (CCA_implies_CPL h)
 
 end PeanoNat
 

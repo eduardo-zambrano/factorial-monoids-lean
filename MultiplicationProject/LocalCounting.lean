@@ -9,13 +9,13 @@ This file proves the local stars-and-bars formula for factorization counts
 on prime powers.
 
 Main results:
-- `Lemma_PP_Unique`: If p^e = x·y, then x = p^a and y = p^{e-a} for unique a (Lemma 6.1)
+- `pp_unique`: If p^e = x·y, then x = p^a and y = p^{e-a} for unique a (Lemma 6.1)
 - `Theorem_Local_SB`: F_k(p^e) = C(e+k-1, k-1) (Theorem 6.2)
 
 Formalized with assistance from Aristotle.
 -/
 
-import MultiplicationProject.LocalPurity
+import MultiplicationProject.Coprimality
 
 set_option linter.mathlibStandardSet false
 
@@ -29,9 +29,9 @@ noncomputable section
 ## Lemma 6.1: Unique Factorization within Prime Powers
 -/
 
-/-- **Lemma 6.1**: Assume (PP-D) and (PP-P). If p^e = x · y with p an atom,
+/-- **Lemma 6.1**: Assume (tower faithfulness) and (PP-P). If p^e = x · y with p an atom,
     then x = p^a and y = p^{e-a} for a unique a ∈ {0, ..., e}. -/
-lemma Lemma_PP_Unique {M : Type*} [CommMonoid M] (h_ppd : PP_D M) (h_ppp : PP_P M)
+lemma pp_unique {M : Type*} [CommMonoid M] (h_tf : TowerFaithful M) (h_ppp : TowersFactoriallyClosed M)
     (p : M) (hp : p ∈ Atoms M) (e : ℕ) (x y : M) (h_eq : p ^ e = x * y) :
     ∃! a : ℕ, a ≤ e ∧ x = p ^ a ∧ y = p ^ (e - a) := by
   obtain ⟨a, ha⟩ : ∃ a : ℕ, x = p ^ a := by
@@ -44,12 +44,12 @@ lemma Lemma_PP_Unique {M : Type*} [CommMonoid M] (h_ppd : PP_D M) (h_ppp : PP_P 
   use a
   aesop
   · rw [← pow_add] at h_eq
-    have := h_ppd p hp
+    have := h_tf p hp
     linarith [this h_eq]
   · rw [← pow_add] at h_eq
-    have := h_ppd p hp h_eq
+    have := h_tf p hp h_eq
     aesop
-  · exact h_ppd p hp a_2.symm
+  · exact h_tf p hp a_2.symm
 
 /-!
 ## Theorem 6.2: Local Stars-and-Bars
@@ -57,12 +57,12 @@ lemma Lemma_PP_Unique {M : Type*} [CommMonoid M] (h_ppd : PP_D M) (h_ppp : PP_P 
 
 /-- **Theorem 6.2**: Local stars-and-bars formula.
 
-    Under (PP-D) and (PP-P), for all atoms p, exponents e ≥ 0, and k ≥ 1:
+    Under (tower faithfulness) and (PP-P), for all atoms p, exponents e ≥ 0, and k ≥ 1:
     F_k(p^e) = C(e + k - 1, k - 1)
 
     This counts the number of ways to write e as an ordered sum of k non-negative
     integers, which is the classical stars-and-bars formula. -/
-theorem Theorem_Local_SB {M : Type*} [CommMonoid M] (h_ppd : PP_D M) (h_ppp : PP_P M)
+theorem Theorem_Local_SB {M : Type*} [CommMonoid M] (h_tf : TowerFaithful M) (h_ppp : TowersFactoriallyClosed M)
     (p : M) (hp : p ∈ Atoms M) (e : ℕ) (k : ℕ) (hk : k ≥ 1) :
     LabeledFactorizationCount k (p ^ e) = Nat.choose (e + k - 1) (k - 1) := by
   have h_count : Set.ncard {f : Fin k → M | ∃ g : Fin k → ℕ, (∀ i, f i = p ^ (g i)) ∧ (∑ i, g i) = e} =
@@ -123,7 +123,7 @@ theorem Theorem_Local_SB {M : Type*} [CommMonoid M] (h_ppd : PP_D M) (h_ppp : PP
           aesop
       choose g hg using h_factor
       simp_all +decide [Finset.prod_pow_eq_pow_sum]
-      have := h_ppd p hp
+      have := h_tf p hp
       aesop
     · rw [Finset.prod_pow_eq_pow_sum]
   exact h_count ▸ h_eq ▸ rfl

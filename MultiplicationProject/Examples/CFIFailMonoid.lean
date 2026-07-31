@@ -45,12 +45,12 @@ We use a normalized representation where pq pairs are always reduced to uv.
 - `cfifail_reduced`: The monoid is reduced
 - `cfifail_atomic`: The monoid is atomic
 - `cfifail_APD`: The monoid satisfies APD
-- `cfifail_PPD`: The monoid satisfies PP-D
+- `cfifail_tower_faithful`: The monoid satisfies tower faithfulness
 - `cfifail_CPL`: The monoid satisfies CPL
 - `cfifail_not_CFI`: The monoid does NOT satisfy CFI
 -/
 
-import MultiplicationProject.Basic
+import MultiplicationProject.AxiomsNecessity
 
 
 import Mathlib.Tactic.GeneralizeProofs
@@ -1063,8 +1063,8 @@ theorem cfifail_atomic : Atomic CFIFailMonoid := by
 ## The Four Axioms
 -/
 
-/-- PP-D holds: powers of each atom are distinct. -/
-theorem cfifail_PPD : PP_D CFIFailMonoid := by
+/-- tower faithfulness holds: powers of each atom are distinct. -/
+theorem cfifail_tower_faithful : TowerFaithful CFIFailMonoid := by
   intro p hp a b hab
   rw [atoms_eq] at hp
   simp only [Set.mem_union, Set.mem_insert_iff, Set.mem_range] at hp
@@ -1234,9 +1234,9 @@ theorem cfifail_APD : APD CFIFailMonoid := by
                  Finsupp.single_eq_of_ne hji] at hj
       omega
 
-/-- UAB holds: If p^k = q^m for atoms p, q with k, m ≥ 1, then p = q.
+/-- TD holds: If p^k = q^m for atoms p, q with k, m ≥ 1, then p = q.
     The relation uv ~ pq only identifies degree-1 products of distinct primes, not pure powers. -/
-theorem cfifail_UAB : UAB CFIFailMonoid := by
+theorem cfifail_TD : TD CFIFailMonoid := by
   intro p q hp hq k m hk hm hpow
   rw [atoms_eq] at hp hq
   simp only [Set.mem_union, Set.mem_insert_iff, Set.mem_range] at hp hq
@@ -1399,6 +1399,50 @@ theorem cfifail_not_CFI : ¬CFI CFIFailMonoid := by
   -- But hbij says the map is surjective, so uv_fact should be in the image
   obtain ⟨⟨f, g⟩, hfg⟩ := hbij.2 uv_fact
   exact not_in_image f g hfg
+
+/-! ## WFD holds -/
+
+/-- WFD holds: total degree is additive and a non-unit has positive
+    degree, so strict divisibility strictly increases degree. -/
+theorem cfifail_WFD : WFD CFIFailMonoid := by
+  have hsub : Subrelation (fun a b : CFIFailMonoid => StrictDvd a b)
+      (InvImage (· < ·) CFIFailMonoid.degree) := by
+    intro a b hab
+    obtain ⟨c, hc_unit, rfl⟩ := hab
+    have hc0 : CFIFailMonoid.degree c ≠ 0 := by
+      intro h0
+      exact hc_unit (by rw [isUnit_iff]; exact (CFIFailMonoid.degree_eq_zero_iff c).mp h0)
+    show CFIFailMonoid.degree a < CFIFailMonoid.degree (a * c)
+    rw [CFIFailMonoid.degree_mul]
+    omega
+  exact Subrelation.wf hsub (InvImage.wf _ Nat.lt_wfRel.wf)
+
+/-! ## CPL⁺ holds -/
+
+/-- The regular-atom family atomR is injective. -/
+lemma atomR_injective : Function.Injective atomR := by
+  intro m n h
+  have h1 := congrArg CFIFailMonoid.others h
+  simp only [atomR_others] at h1
+  exact (Finsupp.single_left_inj one_ne_zero).mp h1
+
+instance : Countable CFIFailMonoid := by
+  have hinj : Function.Injective (fun x : CFIFailMonoid =>
+      (x.exp_p, x.exp_q, x.exp_u, x.exp_v, x.others)) := by
+    intro a b h
+    cases a; cases b
+    simp only [Prod.mk.injEq] at h
+    obtain ⟨h1, h2, h3, h4, h5⟩ := h
+    subst h1; subst h2; subst h3; subst h4; subst h5
+    rfl
+  exact hinj.countable
+
+/-- CPL⁺ holds: the atom set is countably infinite, so an enumeration of the
+    atoms is a countable coprime basis. -/
+theorem cfifail_CCA : CCA CFIFailMonoid :=
+  CCA_of_atoms_countably_infinite cfifail_reduced (Set.to_countable _)
+    (Set.infinite_of_injective_forall_mem atomR_injective
+      (fun m => (atomR_irreducible m : atomR m ∈ Atoms CFIFailMonoid)))
 
 end CFIFailMonoid
 

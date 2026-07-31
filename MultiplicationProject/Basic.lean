@@ -66,48 +66,48 @@ def Support {M : Type*} [Monoid M] (m : M) : Set M :=
 In a reduced atomic commutative monoid, the following four axioms
 characterize factorial monoids:
 
-- **PP-D**: Powers of atoms are distinct (p^a = p^b → a = b)
+- **tower faithfulness**: Powers of atoms are distinct (p^a = p^b → a = b)
 - **PP-P**: Prime powers are factorially closed (if x*y ∈ ⟨p⟩ then x, y ∈ ⟨p⟩)
 - **CFI**: Coprime parts factor independently
 - **CPL**: Coprime tuples come in every length
 
 Key derived properties:
-- **APD** (Atom-Power-Divisibility) follows from PP-P (see `PPP_implies_APD`)
-- **UAB** (Unique-Atomic-Base) follows from APD (see `APD_implies_UAB`)
+- **APD** (Atom-Power-Divisibility) follows from PP-P (see `towers_factorially_closed_implies_APD`)
+- **TD** (Tower Disjointness) follows from APD (see `APD_implies_TD`)
 - **Cancellativity** follows from Factorial (which follows from the four axioms)
 
 This formulation (System B) uses four axioms rather than assuming
-cancellativity and deriving PP-D and PP-P from it.
+cancellativity and deriving tower faithfulness and PP-P from it.
 
 Note: While we were not able to prove that the four axioms are logically
 independent (CFI may imply PP-P), the formalization is sorry-free:
-PP-P ⟹ APD is proven directly in `PPP_implies_APD`.
+PP-P ⟹ APD is proven directly in `towers_factorially_closed_implies_APD`.
 -/
 
-/-- **Axiom PP-D**: Powers of atoms are distinct.
+/-- **Axiom tower faithfulness**: Powers of atoms are distinct.
     For every atom p, the map e ↦ p^e is injective. -/
-def PP_D (M : Type*) [Monoid M] : Prop :=
+def TowerFaithful (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, Function.Injective (fun (e : ℕ) => p ^ e)
 
-/-- **Axiom UAB**: Unique Atomic Base.
+/-- **Axiom TD**: Tower Disjointness.
     If p^k = q^m for atoms p, q and positive k, m, then p = q.
     This says that distinct atoms have disjoint prime-power towers. -/
-def UAB (M : Type*) [Monoid M] : Prop :=
+def TD (M : Type*) [Monoid M] : Prop :=
   ∀ p q : M, p ∈ Atoms M → q ∈ Atoms M →
     ∀ k m : ℕ, k ≥ 1 → m ≥ 1 → p ^ k = q ^ m → p = q
 
 /-- **Derived Property APD**: Atom-Power-Divisibility.
     If an atom q divides p^k where p is also an atom, then q = p.
     This says that prime power submonoids are "pure" - no foreign atoms can divide in.
-    Follows from PP-P (see `PPP_implies_APD`). -/
+    Follows from PP-P (see `towers_factorially_closed_implies_APD`). -/
 def APD (M : Type*) [Monoid M] : Prop :=
   ∀ p q : M, p ∈ Atoms M → q ∈ Atoms M → ∀ k : ℕ, q ∣ p ^ k → q = p
 
 /-- **Axiom PP-P**: Prime powers are factorially closed.
     For every atom p, if x * y is a power of p, then x and y are powers of p.
-    This implies APD (see `PPP_implies_APD`), which in turn implies
-    APD_implies_PPP (the converse direction). -/
-def PP_P (M : Type*) [Monoid M] : Prop :=
+    This implies APD (see `towers_factorially_closed_implies_APD`), which in turn implies
+    APD_implies_towers_factorially_closed (the converse direction). -/
+def TowersFactoriallyClosed (M : Type*) [Monoid M] : Prop :=
   ∀ p ∈ Atoms M, ∀ x y : M, x * y ∈ Submonoid.powers p →
     x ∈ Submonoid.powers p ∧ y ∈ Submonoid.powers p
 
@@ -134,6 +134,31 @@ def CFI (M : Type*) [CommMonoid M] : Prop :=
 def CPL (M : Type*) [Monoid M] : Prop :=
   ∀ r : ℕ, ∃ (L : List M), L.length = r ∧ (∀ x ∈ L, ¬ IsUnit x) ∧ L.Pairwise AreCoprime
 
+/-- **Axiom CPL⁺**: Countable coprime basis (strengthening of CPL).
+    There is a sequence m₁, m₂, … of pairwise coprime non-units such that
+    every atom divides some mᵢ. In (ℕ, ×) the primes themselves witness this.
+
+    CPL⁺ does the old CPL's job (truncate the sequence: `CCA_implies_CPL`)
+    and additionally forces the atom set to be countable
+    (`atoms_countable_of_CCA`), with no countability assumption on M. -/
+def CCA (M : Type*) [Monoid M] : Prop :=
+  ∃ m : ℕ → M, (∀ i, ¬ IsUnit (m i)) ∧
+    (∀ i j, i ≠ j → AreCoprime (m i) (m j)) ∧
+    (∀ p ∈ Atoms M, ∃ i, p ∣ m i)
+
+/-- CPL⁺ implies CPL: truncating the coprime basis at length r gives r
+    pairwise coprime non-units. -/
+theorem CCA_implies_CPL {M : Type*} [Monoid M] (h : CCA M) : CPL M := by
+  obtain ⟨m, hm_nonunit, hm_cop, -⟩ := h
+  intro r
+  refine ⟨List.ofFn (fun i : Fin r => m i), by simp, ?_, ?_⟩
+  · intro x hx
+    obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hx
+    exact hm_nonunit i
+  · rw [List.pairwise_ofFn]
+    intro i j hij
+    exact hm_cop i j (Nat.ne_of_lt (by exact_mod_cast hij))
+
 /-!
 ## PP-P implies APD
 
@@ -149,8 +174,8 @@ The converse (APD implies PP-P) also holds, establishing their equivalence.
     - j = 0: q = 1, contradiction (atoms are not units)
     - j = 1: q = p, as desired
     - j ≥ 2: q = p * p^(j-1), contradicting irreducibility of q -/
-theorem PPP_implies_APD {M : Type*} [CommMonoid M]
-    (_h_reduced : Reduced M) (h_ppp : PP_P M) : APD M := by
+theorem towers_factorially_closed_implies_APD {M : Type*} [CommMonoid M]
+    (_h_reduced : Reduced M) (h_ppp : TowersFactoriallyClosed M) : APD M := by
   intro p q hp hq k hdvd
   obtain ⟨m, hm⟩ := hdvd
   have ⟨⟨j, hj⟩, _⟩ := h_ppp p hp q m ⟨k, hm⟩
@@ -164,12 +189,12 @@ theorem PPP_implies_APD {M : Type*} [CommMonoid M]
       simp_all +decide [not_or, irreducible_iff]
     unfold Atoms at hq; aesop
 
-/-- APD implies UAB: If any atom dividing a prime power equals that prime,
+/-- APD implies TD: If any atom dividing a prime power equals that prime,
     then distinct atoms have disjoint prime-power towers.
 
     Proof: If p^k = q^m with k, m ≥ 1, then q | q^m = p^k, so q = p by APD. -/
-theorem APD_implies_UAB {M : Type*} [CommMonoid M]
-    (h_apd : APD M) : UAB M := by
+theorem APD_implies_TD {M : Type*} [CommMonoid M]
+    (h_apd : APD M) : TD M := by
   intro p q hp hq k m hk _hm hpk_eq_qm
   have hq_dvd_pk : q ∣ p ^ k := by
     have : q * q ^ (m - 1) = q ^ m := by
@@ -192,8 +217,8 @@ APD trivially implies PP-P (the converse of PP-P ⟹ APD above).
     If x is not a unit, let x = q₁ ⋯ qᵣ be an atomic factorization.
     Each qᵢ divides x, and x divides p^e, so qᵢ ∣ p^e.
     By APD, qᵢ = p for all i. Hence x = p^r ∈ ⟨p⟩. Similarly for y. -/
-theorem APD_implies_PPP {M : Type*} [CommMonoid M]
-    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) : PP_P M := by
+theorem APD_implies_towers_factorially_closed {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_apd : APD M) : TowersFactoriallyClosed M := by
   intro p hp x y hxy
   obtain ⟨e, he⟩ := hxy
   -- Helper: if x is a non-unit and all atoms dividing x equal p, then x ∈ ⟨p⟩
@@ -492,10 +517,10 @@ def PValuation {M : Type*} [CommMonoid M] (p : M) (m : M) : ℕ :=
   sSup {e | p ^ e ∣ m}
 
 /-!
-## Cancellativity implies PP-D
+## Cancellativity implies tower faithfulness
 
 In a reduced atomic cancellative monoid, powers of atoms are automatically distinct.
-This shows that PP-D is a consequence of cancellativity.
+This shows that tower faithfulness is a consequence of cancellativity.
 -/
 
 /-- In a reduced commutative monoid, a positive power of an atom is not a unit. -/
@@ -510,13 +535,13 @@ lemma pow_atom_not_unit {M : Type*} [CommMonoid M] (_h_reduced : Reduced M)
       exact isUnit_of_mul_isUnit_right h_unit
   exact hp.not_isUnit h_p_unit
 
-/-- Cancellativity implies PP-D: In a reduced cancellative monoid, powers of atoms are distinct.
+/-- Cancellativity implies tower faithfulness: In a reduced cancellative monoid, powers of atoms are distinct.
 
     Proof: Suppose p^a = p^b with a < b. Then p^a · 1 = p^a = p^b = p^a · p^{b-a}.
     By left cancellation, 1 = p^{b-a}. Since b > a, p^{b-a} is a positive power of an atom,
     hence not a unit in a reduced monoid. But 1 is a unit, contradiction. So a = b. -/
-theorem cancellativity_implies_PP_D {M : Type*} [CancelCommMonoid M]
-    (h_reduced : Reduced M) : PP_D M := by
+theorem cancellativity_implies_TowerFaithful {M : Type*} [CancelCommMonoid M]
+    (h_reduced : Reduced M) : TowerFaithful M := by
   intro p hp a b hab
   simp only at hab
   by_contra h_neq
@@ -607,7 +632,7 @@ lemma Factorial_implies_mul_right_cancel {M : Type*} [CommMonoid M]
   exact Factorial_implies_mul_left_cancel h_reduced h_atomic h_factorial h
 
 /-!
-## ACCP (Ascending Chain Condition on Principal Ideals)
+## WFD (Ascending Chain Condition on Principal Ideals)
 
 Standard well-foundedness condition for divisibility in commutative monoids.
 Mathlib's WfDvdMonoid requires CommMonoidWithZero; we define our own version
@@ -620,12 +645,89 @@ for CommMonoid (no zero element).
 def StrictDvd {M : Type*} [CommMonoid M] (a b : M) : Prop :=
   ∃ c : M, ¬IsUnit c ∧ b = a * c
 
-/-- The Ascending Chain Condition on Principal ideals (ACCP).
+/-- The Ascending Chain Condition on Principal ideals (WFD).
     States that the strict divisibility relation is well-founded:
     there are no infinite strictly descending divisibility chains.
-    In a cancellative monoid, this follows from atomicity.
+    In a cancellative monoid, WFD implies atomicity; the converse fails
+    (Grams 1974). In the non-cancellative setting the two are independent.
     This is the CommMonoid analogue of Mathlib's WfDvdMonoid. -/
-def ACCP (M : Type*) [CommMonoid M] : Prop :=
+def WFD (M : Type*) [CommMonoid M] : Prop :=
   WellFounded (fun (a b : M) => StrictDvd a b)
+
+/-- Under WFD, no element strictly divides itself: well-foundedness
+    forbids the loop x = x · c with c a non-unit. -/
+theorem not_strictDvd_self_of_WFD {M : Type*} [CommMonoid M]
+    (h : WFD M) (x : M) : ¬ StrictDvd x x := by
+  have hacc := h.apply x
+  induction hacc with
+  | intro y _ ih => exact fun hyy => ih y hyy hyy
+
+/-- WFD implies atomicity: Cohn's classical argument, cancellativity-free.
+    A minimal non-atomic non-unit under strict divisibility splits into two
+    non-units, and both factors are cofactor-strict divisors — no
+    cancellation needed for strictness. -/
+theorem Atomic_of_WFD {M : Type*} [CommMonoid M] (h : WFD M) : Atomic M := by
+  intro x
+  induction x using h.induction with
+  | h x ih =>
+    intro hx
+    by_cases hirr : Irreducible x
+    · refine ⟨{x}, ?_, by simp⟩
+      intro a ha
+      rw [Multiset.mem_singleton.mp ha]
+      exact hirr
+    · have hsplit : ∃ b c : M, x = b * c ∧ ¬IsUnit b ∧ ¬IsUnit c := by
+        by_contra hcon
+        push_neg at hcon
+        refine hirr ⟨hx, fun a b hab => ?_⟩
+        by_cases ha : IsUnit a
+        · exact Or.inl ha
+        · exact Or.inr (hcon a b hab ha)
+      obtain ⟨b, c, hx_eq, hb, hc⟩ := hsplit
+      obtain ⟨sb, hsb, hsb_prod⟩ := ih b ⟨c, hc, hx_eq⟩ hb
+      obtain ⟨sc, hsc, hsc_prod⟩ := ih c ⟨b, hb, by rw [hx_eq, mul_comm]⟩ hc
+      refine ⟨sb + sc, ?_, ?_⟩
+      · intro a ha
+        rcases Multiset.mem_add.mp ha with h' | h'
+        exacts [hsb a h', hsc a h']
+      · rw [Multiset.prod_add, hsb_prod, hsc_prod, hx_eq]
+
+/-- WFD implies tower faithfulness: powers of an atom are distinct.
+
+    If `p ^ a = p ^ b` with `a < b`, then
+    `p ^ a = p ^ a * p ^ (b - a)`.  The cofactor is a positive power of
+    an atom, hence a non-unit, so `p ^ a` strictly divides itself.  This
+    contradicts the well-foundedness in WFD.  The case `b < a` is
+    symmetric. -/
+theorem WFD_implies_tower_faithful {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_wfd : WFD M) : TowerFaithful M := by
+  have no_loop : ∀ x : M, Acc (fun a b : M => StrictDvd a b) x →
+      ¬ StrictDvd x x := by
+    intro x hx hxx
+    induction hx with
+    | intro x hprev ih =>
+      exact ih x hxx hxx
+  intro p hp a b hab
+  change p ^ a = p ^ b at hab
+  by_contra hne
+  rcases lt_or_gt_of_ne hne with hlt | hgt
+  · have hpos : 1 ≤ b - a := by omega
+    have hnonunit : ¬ IsUnit (p ^ (b - a)) :=
+      pow_atom_not_unit h_reduced hp hpos
+    have hself : StrictDvd (p ^ a) (p ^ a) := by
+      refine ⟨p ^ (b - a), hnonunit, ?_⟩
+      rw [← pow_add]
+      have hadd : a + (b - a) = b := by omega
+      rw [hadd, ← hab]
+    exact no_loop (p ^ a) (h_wfd.apply (p ^ a)) hself
+  · have hpos : 1 ≤ a - b := by omega
+    have hnonunit : ¬ IsUnit (p ^ (a - b)) :=
+      pow_atom_not_unit h_reduced hp hpos
+    have hself : StrictDvd (p ^ b) (p ^ b) := by
+      refine ⟨p ^ (a - b), hnonunit, ?_⟩
+      rw [← pow_add]
+      have hadd : b + (a - b) = a := by omega
+      rw [hadd, hab]
+    exact no_loop (p ^ b) (h_wfd.apply (p ^ b)) hself
 
 end

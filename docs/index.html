@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Theorem 4.1 — Dependency Map</title>
+<style>
+  :root {
+    --ink: #1e293b; --muted: #64748b; --paper: #fbfaf8; --edge: #b6c2d2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif; background: var(--paper); color: var(--ink); padding: 28px 0 60px; }
+  header { max-width: 1400px; margin: 0 auto 6px; padding: 0 24px; }
+  h1 { font-size: 21px; font-weight: 600; letter-spacing: .2px; }
+  h1 .thm { color: #3730a3; }
+  .sub { font-size: 13.5px; color: var(--muted); margin-top: 6px; line-height: 1.5; max-width: 980px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: 12px; align-items: center; }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid; display: inline-block; }
+  #wrap { position: relative; width: 1400px; margin: 18px auto 0; height: 1826px; }
+  #edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .band { position: absolute; border-radius: 14px; background: #f1f0ec; opacity: .55; }
+  .bandlabel { position: absolute; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: #a8a29e; text-transform: uppercase; }
+  .node { position: absolute; border-radius: 10px; border: 1.5px solid; padding: 8px 12px 7px; background: #fff;
+          box-shadow: 0 1px 3px rgba(30,41,59,.10); cursor: pointer; transition: opacity .15s, box-shadow .15s, transform .15s; }
+  .node .no { font-size: 10.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; opacity: .75; }
+  .node .ti { font-size: 13px; font-weight: 600; line-height: 1.25; margin-top: 1px; }
+  .node .ln { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .ax   { border-color: #d97706; background: #fffbeb; } .ax .no { color: #b45309; }
+  .der  { border-color: #0d9488; background: #f0fdfa; } .der .no { color: #0f766e; }
+  .str  { border-color: #2563eb; background: #eff6ff; } .str .no { color: #1d4ed8; }
+  .card { border-color: #9333ea; background: #faf5ff; } .card .no { color: #7e22ce; }
+  .conv { border-color: #16a34a; background: #f0fdf4; } .conv .no { color: #15803d; }
+  .pc   { border-color: #e11d48; background: #fff1f2; } .pc .no { color: #be123c; }
+  .mile { border-color: #4338ca; background: #eef2ff; border-width: 2.5px; } .mile .no { color: #3730a3; }
+  .mutedN { border-color: #cbd5e1; background: #f8fafc; border-style: dashed; } .mutedN .no { color: #94a3b8; }
+  .mutedN .ti { color: #64748b; }
+  .basebar { border-color: #94a3b8; background: #f8fafc; text-align: center; }
+  .thmbar { text-align: center; padding-top: 11px; }
+  .thmbar .ti { font-size: 15px; }
+  .dim { opacity: .16; }
+  .focus { box-shadow: 0 4px 16px rgba(30,41,59,.28); transform: translateY(-1px); }
+  .pinned { box-shadow: 0 0 0 2.5px rgba(51,65,85,.45), 0 4px 16px rgba(30,41,59,.28); transform: translateY(-1px); }
+  path.e { stroke: var(--edge); stroke-width: 1.6; fill: none; }
+  path.e.dashed { stroke-dasharray: 5 5; }
+  path.e.dimE { opacity: .10; }
+  path.e.hot { stroke: #334155; stroke-width: 2.4; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="thm">Theorem 4.1</span> — dependency map &nbsp;·&nbsp; (A) axioms ⟺ (B) factorial + ℵ₀ atoms ⟺ (C) M ≅ (ℕ,×)</h1>
+  <div class="sub">
+    Nodes represent the paper’s principal statements and explicitly isolated proof stages; Lean
+    identifiers appear beneath formalized results. An arrow <i>X</i> → <i>Y</i> means that <i>X</i> is
+    used in the proof of <i>Y</i>. The standing reduced-commutative-monoid assumption is displayed once
+    and suppressed from individual arrows. Hover over a node to highlight its displayed proof ancestry; click to pin the highlight (click again or press Escape to release).
+  </div>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="border-color:#d97706;background:#fffbeb"></span>axiom</span>
+    <span class="chip"><span class="sw" style="border-color:#0d9488;background:#f0fdfa"></span>first consequences of (WFD)</span>
+    <span class="chip"><span class="sw" style="border-color:#2563eb;background:#eff6ff"></span>structural chain (§5–§7)</span>
+    <span class="chip"><span class="sw" style="border-color:#9333ea;background:#faf5ff"></span>cardinality layer (CCA)</span>
+    <span class="chip"><span class="sw" style="border-color:#16a34a;background:#f0fdf4"></span>converse (B)⟹(A)</span>
+    <span class="chip"><span class="sw" style="border-color:#e11d48;background:#fff1f2"></span>part (C)</span>
+    <span class="chip"><span class="sw" style="border-color:#4338ca;background:#eef2ff"></span>milestone</span>
+  </div>
+</header>
+
+<div id="wrap">
+  <svg id="edges"></svg>
+</div>
+
+<script>
+const nodes = [
+  // id, class, x, y, w, number, title, lean, tooltip
+  ["base","basebar",20,6,1360,"Standing assumption","(M, ·, 1) a reduced commutative monoid — the only base hypothesis; ambient below","", "Feeds every node; edges omitted to avoid clutter."],
+
+  ["wfd","ax",120,86,225,"Axiom (WFD)","Strict divisibility is well-founded","WFD","Cofactor-strict form = unit-cancellativity + principal-ideal chain condition."],
+  ["uab","ax",375,86,185,"Axiom (TD)","Distinct atom towers are disjoint","TD","Distinct towers meet only at 1."],
+  ["cfi","ax",590,86,235,"Axiom (CFI)","Coprime factorizations assemble bijectively","CFI","The load-bearing axiom: proofs pull factorizations back through μ₂."],
+  ["cca","ax",855,86,255,"Axiom (CCA)","Coprime coverage of the atoms","CCA","Sequence of pairwise coprime non-units meeting every atom."],
+
+  ["atomic","der",40,212,215,"Prop 3.4","Atomicity","Atomic_of_WFD","Cohn’s argument; cofactor-strictness replaces cancellativity."],
+  ["ppd","der",285,212,210,"Prop 3.6","Tower faithfulness","WFD_implies_tower_faithful","A collapse p^a = p^b is a strict self-division."],
+
+  ["extr","str",480,338,235,"Lem 5.1","Maximal extraction x = sᵐ·c, s ∤ c","maximal_atom_power_extraction","Termination by (WFD)."],
+  ["apd","str",480,464,255,"Prop 5.2","(APD): atom dividing pᵏ equals p","CFI_TD_implies_APD","Well-founded induction; (TD) used exactly once; μ₂ pullback."],
+
+  ["ppp","str",300,590,225,"Cor 5.3","Towers factorially closed","APD_implies_towers_factorially_closed","Corollary of (APD): no foreign material enters a factorization of an atom power."],
+  ["prime","str",760,590,250,"Prop 6.1","Atoms are prime (Euclid)","atoms_are_prime_APD","(i) coprime case from CFI alone; (ii) general with APD + atomicity."],
+
+  ["pcan","str",480,716,255,"Lem 7.1","Power cancellation pᵏ⁺¹ ∣ pᵏu ⟹ p ∣ u","atom_dvd_cancel","First cancellation-shaped statement; μ₂ pullback. In-tower uniqueness inlined (Lean: pp_unique)."],
+  ["vmult","str",480,842,255,"Lem 7.3","Multiplicity rigidity: valuations = atomic multiplicities","multiplicity_rigidity","Intrinsic: the same value in every atomic factorization; proved without additivity."],
+
+  ["addv","str",180,1094,215,"Prop 7.5","Valuation additivity","prop_val_additive","Concatenate atomic factorizations; multiset counts add."],
+  ["prw","str",770,1094,290,"Lem 7.6","Primewise decomposition; exact finite support","lem_primewise_full · support_finite","m = ∏ p^{v_p(m)} over supp(m); support = atoms of any factorization; v_p = 0 outside."],
+
+  ["fact","mile",465,968,285,"Cor 7.4","FACTORIAL","cor_factorial","Atomicity gives existence; equality of intrinsic multiplicities gives uniqueness directly."],
+
+  ["coord","str",180,1220,290,"Cor 7.7","Free coordinates; cancellative","factorialCoordinateEquiv · factorialCoordinateEquiv_apply · cancellative_of_structural","The displayed map e ↦ ∏ p^{e(p)} and its inverse by atomic multiplicities are formalized directly; cancellativity follows by transfer and is also verified separately."],
+
+  ["inf","card",1150,338,230,"§8 lower bound","Atom set infinite","atoms_infinite_of_CCA","Truncate (CCA); pick an atom divisor of each mᵢ."],
+  ["ctb","card",1150,1220,230,"§8 upper bound","Atom set countable","atoms_countable_of_CCA","P = ⋃ supp(mᵢ); each support finite by the primewise-support lemma — (CCA) fires last."],
+
+  ["ab","mile",840,1346,330,"(A) ⟹ (B)","Factorial ∧ P countably infinite","thm_A_implies_B · thm_A_iff_B.mp","Structural layer + cardinality layer."],
+
+  ["bfact","conv",40,1470,480,"Hypothesis (B) · factorial part","M is factorial","—","Supplies WFD, TD, CFI alone; canonical multisets s(m) with s(ab)=s(a)+s(b)."],
+  ["brank","conv",700,1470,340,"Hypothesis (B) · rank part","P is countably infinite","—","Supplies CCA alone: enumerate the atoms."],
+  ["bwfd","conv",40,1594,195,"(B)⟹WFD","|s(·)| strictly drops","WFD_of_factorial",""],
+  ["buab","conv",255,1594,195,"(B)⟹TD","replicate multisets","TD_of_factorial",""],
+  ["bcfi","conv",470,1594,240,"(B)⟹CFI","canonical disassembly of μ₂","CFI_of_factorial","Countwise multiset lemmas on disjoint supports."],
+  ["bcca","conv",730,1594,300,"(B)⟹CCA","enumerate the atoms","CCA_of_atoms_countably_infinite",""],
+
+  ["nat","pc",1060,1470,320,"Witness","(ℕ,×) as ℕ⁺: factorial, ℵ₀ atoms","Examples/NatMonoid.lean","pnat_factorial, pnat_atoms_countable/infinite."],
+  ["bc","pc",1060,1594,320,"(B) ⟺ (C)","Equal-rank factorial monoids isomorphic","thm_B_iff_C · factorialMulEquiv","Transport canonical atomic multisets along an atom equivalence."],
+
+  ["thm","mile thmbar",20,1724,1360,"THEOREM 4.1","(A) ⟺ (B) ⟺ (C) — the four axioms hold iff M ≅ (ℕ,×)","thm_A_iff_B · thm_B_iff_C · thm_A_iff_C","Machine-checked in all three forms, sorry-free."],
+];
+
+const deps = {
+  atomic:["wfd"], ppd:["wfd"], extr:["wfd"],
+  apd:["extr","uab","cfi","wfd"],
+  ppp:["apd","atomic"], prime:["cfi","apd","atomic"],
+  pcan:["apd","ppp","ppd","cfi"],
+  vmult:["pcan","prime","atomic"],
+  fact:["vmult","atomic"],
+  addv:["vmult","atomic"], prw:["vmult","prime","atomic"],
+  coord:["fact"],
+  inf:["cca","atomic"], ctb:["cca","prw"],
+  ab:["fact","inf","ctb"],
+  bwfd:["bfact"], buab:["bfact"], bcfi:["bfact"], bcca:["brank"],
+  bc:["bfact","brank","nat"],
+  thm:["ab","bwfd","buab","bcfi","bcca","bc"],
+};
+const dashedEdges = new Set([]);
+
+const wrap = document.getElementById("wrap");
+const svg = document.getElementById("edges");
+const el = {};
+
+// section bands
+const bands = [
+  [30,200,470,120,"§3 · first consequences"],
+  [30,326,1080,972,"§5 – §7 · structural layer and consequences"],
+  [1130,326,270,972,"§8 · cardinality (CCA)"],
+  [30,1458,1010,215,"§8 · converse (B) ⟹ (A), with (B) split by role"],
+  [1050,1458,340,215,"part (C)"],
+];
+for (const [x,y,w,h,label] of bands) {
+  const b = document.createElement("div");
+  b.className = "band"; b.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+  wrap.appendChild(b);
+  if (label) {
+    const l = document.createElement("div");
+    l.className = "bandlabel"; l.textContent = label;
+    l.style.cssText = `left:${x+10}px;top:${y-14}px`;
+    wrap.appendChild(l);
+  }
+}
+
+for (const [id, cls, x, y, w, no, ti, ln, tip] of nodes) {
+  const d = document.createElement("div");
+  d.className = "node " + cls; d.id = "n-" + id;
+  d.style.cssText = `left:${x}px;top:${y}px;width:${w}px`;
+  d.innerHTML = `<div class="no">${no}</div><div class="ti">${ti}</div>` +
+                (ln && ln !== "—" ? `<div class="ln">${ln}</div>` : "");
+  if (tip) d.title = tip;
+  wrap.appendChild(d);
+  el[id] = d;
+}
+
+function anchor(id, side) {
+  const r = el[id].getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  const x = r.left - w.left, y = r.top - w.top;
+  if (side === "b") return [x + r.width/2, y + r.height];
+  return [x + r.width/2, y];
+}
+const defs = document.createElementNS("http://www.w3.org/2000/svg","defs");
+const marker = document.createElementNS("http://www.w3.org/2000/svg","marker");
+marker.setAttribute("id","arr"); marker.setAttribute("viewBox","0 0 10 10");
+marker.setAttribute("refX","9"); marker.setAttribute("refY","5");
+marker.setAttribute("markerWidth","7"); marker.setAttribute("markerHeight","7");
+marker.setAttribute("orient","auto-start-reverse");
+const arrTip = document.createElementNS("http://www.w3.org/2000/svg","path");
+arrTip.setAttribute("d","M 0 1 L 9 5 L 0 9 z"); arrTip.setAttribute("fill","#b6c2d2");
+marker.appendChild(arrTip); defs.appendChild(marker); svg.appendChild(defs);
+
+const edgeEls = [];
+for (const [to, froms] of Object.entries(deps)) {
+  for (const from of froms) {
+    const [x1,y1] = anchor(from, "b"), [x2,y2] = anchor(to, "t");
+    const dy = Math.max(34, (y2-y1)*0.5);
+    const p = document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d", `M ${x1} ${y1} C ${x1} ${y1+dy}, ${x2} ${y2-dy}, ${x2} ${y2}`);
+    p.setAttribute("class","e" + (dashedEdges.has(to+"<-"+from) ? " dashed" : ""));
+    p.setAttribute("marker-end","url(#arr)");
+    svg.appendChild(p);
+    edgeEls.push({from, to, p});
+  }
+}
+
+function ancestors(id) {
+  const seen = new Set([id]); const stack = [id];
+  while (stack.length) {
+    const cur = stack.pop();
+    for (const d of (deps[cur] || [])) if (!seen.has(d)) { seen.add(d); stack.push(d); }
+  }
+  return seen;
+}
+const ids = nodes.map(n => n[0]);
+let pinned = null;
+
+function showCone(id) {
+  const anc = ancestors(id);
+  for (const nid of ids) el[nid].classList.toggle("dim", !anc.has(nid) && nid !== "base");
+  el[id].classList.add("focus");
+  for (const e of edgeEls) {
+    const on = anc.has(e.to) && anc.has(e.from);
+    e.p.classList.toggle("hot", on);
+    e.p.classList.toggle("dimE", !on);
+  }
+}
+function clearCone() {
+  for (const nid of ids) el[nid].classList.remove("dim","focus");
+  for (const e of edgeEls) e.p.classList.remove("hot","dimE");
+}
+function setPinned(id) {
+  if (pinned) el[pinned].classList.remove("pinned");
+  pinned = id;
+  if (pinned) el[pinned].classList.add("pinned");
+}
+
+for (const id of ids) {
+  const d = el[id];
+  d.addEventListener("mouseenter", () => { if (!pinned) showCone(id); });
+  d.addEventListener("mouseleave", () => { if (!pinned) clearCone(); });
+  d.addEventListener("click", () => {
+    if (pinned === id) { setPinned(null); clearCone(); showCone(id); }
+    else { setPinned(id); clearCone(); showCone(id); }
+  });
+}
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && pinned) { setPinned(null); clearCone(); }
+});
+</script>
+</body>
+</html>

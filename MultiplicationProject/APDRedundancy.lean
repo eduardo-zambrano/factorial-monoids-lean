@@ -3,25 +3,25 @@ Copyright (c) 2024 Eduardo Zambrano. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eduardo Zambrano
 
-# Proposition 5.1: CFI + UAB + ACCP implies APD
+# Proposition 5.1: CFI + TD + WFD implies APD
 
-This file proves Proposition 5.1 from the paper: CFI + UAB + ACCP ⟹ APD.
-The paper uses {PP-D, UAB, CFI, CPL} as its four axioms with ACCP as a base
+This file proves Proposition 5.1 from the paper: CFI + TD + WFD ⟹ APD.
+The paper uses {tower faithfulness, TD, CFI, CPL} as its four axioms with WFD as a base
 assumption on the monoid. CPL is not needed for this result; it enters only
 through the main theorem (Theorem 9.1) to force infinitely many atoms.
 
-ACCP (Ascending Chain Condition on Principal ideals) provides well-foundedness
+WFD (Ascending Chain Condition on Principal ideals) provides well-foundedness
 of strict divisibility. It is a standard condition in commutative algebra,
-strictly between "atomic" and "UFD." In cancellative monoids ACCP follows
+strictly between "atomic" and "UFD." In cancellative monoids WFD follows
 from atomicity; in our non-cancellative setting it is an additional assumption.
 
-## Proof Strategy (ACCP + WF induction + CFI)
+## Proof Strategy (WFD + WF induction + CFI)
 
-Well-founded induction on elements via ACCP. For an atom-power x = t^j
+Well-founded induction on elements via WFD. For an atom-power x = t^j
 and an atom s dividing x with s ≠ t:
 
-1. **Extract maximal s-power**: x = s^m * c with s ∤ c (via ACCP).
-2. **If c is a unit**: t^j = s^m, so UAB gives t = s, contradiction.
+1. **Extract maximal s-power**: x = s^m * c with s ∤ c (via WFD).
+2. **If c is a unit**: t^j = s^m, so TD gives t = s, contradiction.
 3. **If c is not a unit**: StrictDvd(s^m, t^j), so the WF induction hypothesis
    gives: every atom dividing s^m equals s. Combined with s ∤ c (maximality),
    this gives AreCoprime(s^m, c). Then CFI + irreducibility of t yields s = t,
@@ -82,16 +82,16 @@ lemma atom_dvd_of_not_coprime (h_reduced : Reduced M) {q c : M}
   rw [← hrq]
   exact hr_dvd_c
 
-/-! ## Maximal atom-power extraction via ACCP -/
+/-! ## Maximal atom-power extraction via WFD -/
 
-/-- In a reduced monoid with ACCP, if atom s divides x, we can extract a
+/-- In a reduced monoid with WFD, if atom s divides x, we can extract a
     maximal s-power: x = s^m * c where s ∤ c and m ≥ 1.
     The extraction terminates by well-foundedness of StrictDvd. -/
-lemma maximal_atom_power_extraction (_h_reduced : Reduced M) (haccp : ACCP M)
+lemma maximal_atom_power_extraction (_h_reduced : Reduced M) (hwfd : WFD M)
     {s x : M} (hs : s ∈ Atoms M) (h_dvd : s ∣ x) :
     ∃ (m : ℕ) (c : M), m ≥ 1 ∧ x = s ^ m * c ∧ ¬(s ∣ c) := by
   -- We induct on x using the well-founded StrictDvd relation
-  induction x using haccp.induction with
+  induction x using hwfd.induction with
   | h x ih =>
   obtain ⟨c₀, hc₀⟩ := h_dvd  -- x = s * c₀
   by_cases h_s_c₀ : s ∣ c₀
@@ -111,31 +111,31 @@ lemma maximal_atom_power_extraction (_h_reduced : Reduced M) (haccp : ACCP M)
 /-! ## Main Theorem -/
 
 /-- The only atomic divisor of t^j (for t an atom) is t itself,
-    assuming CFI + UAB + ACCP (Proposition 5.1 in the paper).
+    assuming CFI + TD + WFD (Proposition 5.1 in the paper).
 
-    Proof by well-founded induction on elements (via ACCP).
+    Proof by well-founded induction on elements (via WFD).
     For x = t^j with atom s | x and s ≠ t:
     - Extract maximal s-power: t^j = s^m * c with s ∤ c.
-    - If c is a unit: t^j = s^m → UAB → t = s, contradiction.
+    - If c is a unit: t^j = s^m → TD → t = s, contradiction.
     - If c is not a unit: StrictDvd(s^m, t^j), so the WF IH on s^m gives
       every atom dividing s^m equals s. Combined with s ∤ c (maximality),
       AreCoprime(s^m, c). Then CFI + irreducibility of t yields s = t,
       contradiction. -/
-lemma atom_dvd_pow_eq_with_UAB (h_reduced : Reduced M)
-    (hcfi : CFI M) (huab : UAB M) (haccp : ACCP M)
+lemma atom_dvd_pow_eq_with_TD (h_reduced : Reduced M)
+    (hcfi : CFI M) (htd : TD M) (hwfd : WFD M)
     {q : M} (hq : q ∈ Atoms M) {r : M} (hr : r ∈ Atoms M) :
     ∀ m : ℕ, m ≥ 1 → r ∣ q ^ m → r = q := by
   -- Reformulate: for every element x, if x = t^j (t atom, j ≥ 1) and
   -- s is an atom dividing x, then s = t.
-  -- We prove this by well-founded induction on x (via ACCP).
+  -- We prove this by well-founded induction on x (via WFD).
   suffices key : ∀ x : M,
       (∀ (t : M), t ∈ Atoms M → ∀ (j : ℕ), j ≥ 1 → x = t ^ j →
         ∀ (s : M), s ∈ Atoms M → s ∣ x → s = t) by
     intro m hm hdvd
     exact key (q ^ m) q hq m hm rfl r hr hdvd
-  -- Prove by well-founded induction on x using ACCP
+  -- Prove by well-founded induction on x using WFD
   intro x
-  induction x using haccp.induction with
+  induction x using hwfd.induction with
   | h x ih =>
   intro t ht j hj hx s hs h_s_dvd
   -- Base case: j = 1
@@ -146,19 +146,19 @@ lemma atom_dvd_pow_eq_with_UAB (h_reduced : Reduced M)
   have hj_ge2 : j ≥ 2 := by omega
   by_contra h_neq
   exfalso
-  -- Step 1: Extract maximal s-power from x = t^j using ACCP
+  -- Step 1: Extract maximal s-power from x = t^j using WFD
   obtain ⟨m, c, hm_ge, heq, h_ndvd⟩ :=
-    maximal_atom_power_extraction h_reduced haccp hs h_s_dvd
+    maximal_atom_power_extraction h_reduced hwfd hs h_s_dvd
   -- heq : x = s^m * c, s ∤ c
   -- Step 2: Case split on whether c is a unit
   by_cases hc_unit : IsUnit c
   · -- c is a unit, hence = 1 in reduced monoid
     have hc1 : c = 1 := h_reduced c hc_unit
     rw [hc1, mul_one] at heq
-    -- x = s^m, i.e. t^j = s^m, so UAB gives t = s, contradiction
+    -- x = s^m, i.e. t^j = s^m, so TD gives t = s, contradiction
     rw [hx] at heq
     -- heq : t^j = s^m, i.e. s^m = t^j by .symm
-    exact h_neq (huab t s ht hs j m (by omega) hm_ge heq).symm
+    exact h_neq (htd t s ht hs j m (by omega) hm_ge heq).symm
   · -- c is not a unit
     -- Step 3: StrictDvd(s^m, x) since x = s^m * c with c non-unit
     have h_strict_sm : StrictDvd (s ^ m) x := ⟨c, hc_unit, heq⟩
@@ -224,10 +224,10 @@ lemma atom_dvd_pow_eq_with_UAB (h_reduced : Reduced M)
       -- By WF IH on s^m: t = s, contradiction
       exact h_neq (ih (s ^ m) h_strict_sm s hs m hm_ge rfl t ht ht_dvd_sm).symm
 
-/-- Main theorem: CFI + UAB + ACCP implies APD (Proposition 5.1). -/
-theorem CFI_UAB_implies_APD (h_reduced : Reduced M) :
-    CFI M → UAB M → ACCP M → APD M := by
-  intro hcfi huab haccp
+/-- Main theorem: CFI + TD + WFD implies APD (Proposition 5.1). -/
+theorem CFI_TD_implies_APD (h_reduced : Reduced M) :
+    CFI M → TD M → WFD M → APD M := by
+  intro hcfi htd hwfd
   rw [APD]
   intro p q hp hq k hdvd
   cases k with
@@ -236,6 +236,6 @@ theorem CFI_UAB_implies_APD (h_reduced : Reduced M) :
     rw [Atoms, Set.mem_setOf_eq] at hq
     exact absurd (isUnit_of_dvd_one hdvd) hq.not_isUnit
   | succ k' =>
-    exact atom_dvd_pow_eq_with_UAB h_reduced hcfi huab haccp hp hq (k' + 1) (by omega) hdvd
+    exact atom_dvd_pow_eq_with_TD h_reduced hcfi htd hwfd hp hq (k' + 1) (by omega) hdvd
 
 end

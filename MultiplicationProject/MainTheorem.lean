@@ -41,15 +41,16 @@ Authors: Eduardo Zambrano
 # Section 9: Main Theorem
 
 This file proves Theorem 9.1 from the paper:
-Under (PP-D), (CFI), and (CPL), the monoid M is isomorphic to (ℕ, ×).
+Under (tower faithfulness), (CFI), and (CPL), the monoid M is isomorphic to (ℕ, ×).
 
 The proof has two parts:
-(a) M is factorial - proven in MasterFormula_v2_aristotle.lean as cor_factorial
+(a) M is factorial - proven in FactorialStructure.lean as cor_factorial
 (b) CPL forces the atom set to be countably infinite, hence M ≅ (ℕ, ×)
 -/
 
-import MultiplicationProject.MasterFormula
-import MultiplicationProject.APD_Redundancy_v6
+import MultiplicationProject.FactorialStructure
+import MultiplicationProject.APDRedundancy
+import MultiplicationProject.AxiomsNecessity
 
 
 set_option linter.mathlibStandardSet false
@@ -150,7 +151,7 @@ theorem atoms_infinite_of_CPL {M : Type*} [CommMonoid M]
 
 /-- **Theorem 9.1**: Main result (APD version).
 
-    Under (APD), (PP-D), (CFI), and (CPL):
+    Under (APD), (tower faithfulness), (CFI), and (CPL):
     (a) M is factorial (isomorphic to ⊕_{p ∈ P} ℕ₀)
     (b) The atom set P is countably infinite, hence M ≅ (ℕ, ×)
 
@@ -160,49 +161,49 @@ theorem atoms_infinite_of_CPL {M : Type*} [CommMonoid M]
     is derived from the axioms via Factorial. -/
 theorem thm_main {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_apd : APD M) (h_ppd : PP_D M) (h_cfi : CFI M) (h_cpl : CPL M) :
+    (h_apd : APD M) (h_tf : TowerFaithful M) (h_cfi : CFI M) (h_cpl : CPL M) :
     Factorial M ∧ Set.Infinite (Atoms M) :=
-  ⟨cor_factorial h_reduced h_atomic h_apd h_ppd h_cfi,
+  ⟨cor_factorial h_reduced h_atomic h_apd h_tf h_cfi,
    atoms_infinite_of_CPL h_atomic h_cpl⟩
 
 /-- **Theorem 9.1**: Main result (System B version, sorry-free).
 
-    Under (PP-P), (PP-D), (CFI), and (CPL):
+    Under (PP-P), (tower faithfulness), (CFI), and (CPL):
     (a) M is factorial (isomorphic to ⊕_{p ∈ P} ℕ₀)
     (b) The atom set P is countably infinite, hence M ≅ (ℕ, ×)
 
-    This uses the axiom system {PP-D, PP-P, CFI, CPL}, where APD is
-    derived from PP-P via `PPP_implies_APD`. The entire proof chain
+    This uses the axiom system {tower faithfulness, PP-P, CFI, CPL}, where APD is
+    derived from PP-P via `towers_factorially_closed_implies_APD`. The entire proof chain
     from these axioms to the conclusion is sorry-free.
 
     Note: This uses CommMonoid (not CancelCommMonoid) since cancellativity
     is derived from the axioms via Factorial. -/
-theorem thm_main_PPP {M : Type*} [CommMonoid M]
+theorem thm_main_towers_factorially_closed {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppp : PP_P M) (h_ppd : PP_D M) (h_cfi : CFI M) (h_cpl : CPL M) :
+    (h_ppp : TowersFactoriallyClosed M) (h_tf : TowerFaithful M) (h_cfi : CFI M) (h_cpl : CPL M) :
     Factorial M ∧ Set.Infinite (Atoms M) :=
-  thm_main h_reduced h_atomic (PPP_implies_APD h_reduced h_ppp) h_ppd h_cfi h_cpl
+  thm_main h_reduced h_atomic (towers_factorially_closed_implies_APD h_reduced h_ppp) h_tf h_cfi h_cpl
 
 /-- **Theorem 9.1**: Main result (paper version).
 
-    Under (PP-D), (UAB), (CFI), (CPL), and ACCP (base assumption):
+    Under (tower faithfulness), (TD), (CFI), (CPL), and WFD (base assumption):
     (a) M is factorial (isomorphic to ⊕_{p ∈ P} ℕ₀)
     (b) The atom set P is countably infinite, hence M ≅ (ℕ, ×)
 
-    This matches the paper's axiom system {PP-D, UAB, CFI, CPL} with ACCP
+    This matches the paper's axiom system {tower faithfulness, TD, CFI, CPL} with WFD
     as a base assumption. The proof chains through Proposition 5.1
-    (CFI + UAB + ACCP ⟹ APD) and then applies `thm_main`.
+    (CFI + TD + WFD ⟹ APD) and then applies `thm_main`.
 
     Note: This uses CommMonoid (not CancelCommMonoid) since cancellativity
     is derived from the axioms via Factorial. -/
-theorem thm_main_UAB {M : Type*} [CommMonoid M]
+theorem thm_main_TD {M : Type*} [CommMonoid M]
     (h_reduced : Reduced M) (h_atomic : Atomic M)
-    (h_ppd : PP_D M) (h_uab : UAB M) (h_cfi : CFI M) (h_cpl : CPL M)
-    (h_accp : ACCP M) :
+    (h_tf : TowerFaithful M) (h_td : TD M) (h_cfi : CFI M) (h_cpl : CPL M)
+    (h_wfd : WFD M) :
     Factorial M ∧ Set.Infinite (Atoms M) :=
   thm_main h_reduced h_atomic
-    (CFI_UAB_implies_APD h_reduced h_cfi h_uab h_accp)
-    h_ppd h_cfi h_cpl
+    (CFI_TD_implies_APD h_reduced h_cfi h_td h_wfd)
+    h_tf h_cfi h_cpl
 
 /-- The atom set is countable when M is countable. -/
 theorem atoms_countable {M : Type*} [CommMonoid M] [Countable M] :
@@ -214,5 +215,145 @@ theorem atoms_countably_infinite {M : Type*} [CommMonoid M] [Countable M]
     (h_atomic : Atomic M) (h_cpl : CPL M) :
     (Atoms M).Countable ∧ Set.Infinite (Atoms M) :=
   ⟨atoms_countable, atoms_infinite_of_CPL h_atomic h_cpl⟩
+
+/-! ## CPL⁺: the strengthened axiom
+
+CPL⁺ (`CCA`, defined in Basic.lean) supplies both halves of "the atom
+set is countably infinite" with NO countability assumption on M:
+- the lower bound (infinitude) via `CCA_implies_CPL`;
+- the upper bound (countability) because every atom divides some member of
+  the coprime basis, hence lies in its finite support (`support_finite`,
+  the primewise-support lemma — paper Lemma 7.6).
+
+Note the firing order: countability needs the other axioms' machinery
+(finite supports); CPL⁺ is the last axiom to fire. -/
+
+/-- CPL⁺ implies the atom set is infinite (lower bound half). -/
+theorem atoms_infinite_of_CCA {M : Type*} [CommMonoid M]
+    (h_atomic : Atomic M) (h : CCA M) :
+    Set.Infinite (Atoms M) :=
+  atoms_infinite_of_CPL h_atomic (CCA_implies_CPL h)
+
+/-- CPL⁺ implies the atom set is countable (upper bound half) — with no
+    countability assumption on M. Every atom divides some basis element mᵢ,
+    hence lies in Support(mᵢ), which is finite (`support_finite`, the
+    primewise-support lemma); so the atoms are covered by countably many
+    finite sets. This is the paper's §8 upper-bound argument verbatim. -/
+theorem atoms_countable_of_CCA {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_apd : APD M) (h_tf : TowerFaithful M) (h_cfi : CFI M)
+    (h : CCA M) :
+    (Atoms M).Countable := by
+  obtain ⟨m, hm_nonunit, -, hm_cover⟩ := h
+  have hsub : Atoms M ⊆ ⋃ i, Support (m i) := by
+    intro p hp
+    obtain ⟨i, hi⟩ := hm_cover p hp
+    exact Set.mem_iUnion.mpr ⟨i, hp, hi⟩
+  exact Set.Countable.mono hsub
+    (Set.countable_iUnion fun i =>
+      (support_finite h_reduced h_atomic h_apd h_tf h_cfi (m i)
+        (hm_nonunit i)).countable)
+
+/-- Under Reduced + Atomic + APD + CFI, the axiom CPL⁺ makes the atom set
+    countably infinite — no countability hypothesis on M. -/
+theorem atoms_countably_infinite_of_CCA {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_apd : APD M) (h_tf : TowerFaithful M) (h_cfi : CFI M)
+    (h : CCA M) :
+    (Atoms M).Countable ∧ Set.Infinite (Atoms M) :=
+  ⟨atoms_countable_of_CCA h_reduced h_atomic h_apd h_tf h_cfi h,
+   atoms_infinite_of_CCA h_atomic h⟩
+
+/-- **Theorem 9.1, revised (CPL⁺ version)**: Under the axiom system
+    {tower faithfulness, TD, CFI, CPL⁺} with base assumptions (reduced, atomic, WFD):
+    (a) M is factorial;
+    (b) the atom set is countably infinite.
+    Hence M is the free commutative monoid on countably many generators,
+    i.e., M ≅ (ℕ, ×). No countability of M is assumed — CPL⁺ provides it. -/
+theorem thm_A_implies_B {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M)
+    (h_tf : TowerFaithful M) (h_td : TD M) (h_cfi : CFI M) (h_cca : CCA M)
+    (h_wfd : WFD M) :
+    Factorial M ∧ (Atoms M).Countable ∧ Set.Infinite (Atoms M) := by
+  have h_apd : APD M := CFI_TD_implies_APD h_reduced h_cfi h_td h_wfd
+  exact ⟨cor_factorial h_reduced h_atomic h_apd h_tf h_cfi,
+    atoms_countable_of_CCA h_reduced h_atomic h_apd h_tf h_cfi h_cca,
+    atoms_infinite_of_CCA h_atomic h_cca⟩
+
+/-- **The characterization theorem**: over the base assumptions (reduced,
+    atomic, WFD), the axiom system {tower faithfulness, TD, CFI, CPL⁺} holds IF AND ONLY
+    IF M is factorial with countably infinite atom set — i.e., iff M is the
+    free commutative monoid on countably many generators, i.e., M ≅ (ℕ, ×).
+
+    Forward direction: `thm_A_implies_B` (uses WFD via Prop 5.1).
+    Backward direction: `tower_faithful_of_factorial`, `TD_of_factorial`,
+    `CFI_of_factorial`, `CCA_of_atoms_countably_infinite`
+    (needs only reducedness). -/
+theorem thm_characterization {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_wfd : WFD M) :
+    (TowerFaithful M ∧ TD M ∧ CFI M ∧ CCA M) ↔
+    (Factorial M ∧ (Atoms M).Countable ∧ Set.Infinite (Atoms M)) := by
+  constructor
+  · rintro ⟨h1, h2, h3, h4⟩
+    exact thm_A_implies_B h_reduced h_atomic h1 h2 h3 h4 h_wfd
+  · rintro ⟨hf, hc, hi⟩
+    exact ⟨tower_faithful_of_factorial h_reduced hf, TD_of_factorial h_reduced hf,
+           CFI_of_factorial h_reduced hf,
+           CCA_of_atoms_countably_infinite h_reduced hc hi⟩
+
+/-- **The characterization theorem, three-axiom form**: since WFD already
+    implies tower faithfulness (`WFD_implies_tower_faithful`), the axiom tower faithfulness can be dropped.
+    Over the base assumptions (reduced, atomic, WFD):
+    {TD, CFI, CPL⁺} ⟺ factorial with countably infinite atom set.
+    This is the form of the main theorem stated in the paper (Theorem 4.1);
+    the backward direction uses only reducedness. -/
+theorem thm_characterization_three_axioms {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) (h_atomic : Atomic M) (h_wfd : WFD M) :
+    (TD M ∧ CFI M ∧ CCA M) ↔
+    (Factorial M ∧ (Atoms M).Countable ∧ Set.Infinite (Atoms M)) := by
+  constructor
+  · rintro ⟨h2, h3, h4⟩
+    exact thm_A_implies_B h_reduced h_atomic
+      (WFD_implies_tower_faithful h_reduced h_wfd) h2 h3 h4 h_wfd
+  · rintro ⟨hf, hc, hi⟩
+    exact ⟨TD_of_factorial h_reduced hf, CFI_of_factorial h_reduced hf,
+           CCA_of_atoms_countably_infinite h_reduced hc hi⟩
+
+/-- **The cardinality-free characterization** (the first display of the
+    paper's Theorem 4.1): over a reduced commutative monoid — nothing else
+    assumed — the three structural axioms {WFD, TD, CFI} (paper names:
+    {WFD, TD, CFI}) hold iff M is factorial. Forward: atomicity and tower faithfulness
+    from WFD, APD from CFI + TD + WFD, then factoriality; backward:
+    each axiom from factoriality, using only reducedness. -/
+theorem thm_structural_characterization {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) :
+    (WFD M ∧ TD M ∧ CFI M) ↔ Factorial M := by
+  constructor
+  · rintro ⟨h_wfd, h_td, h_cfi⟩
+    exact cor_factorial h_reduced (Atomic_of_WFD h_wfd)
+      (CFI_TD_implies_APD h_reduced h_cfi h_td h_wfd)
+      (WFD_implies_tower_faithful h_reduced h_wfd) h_cfi
+  · intro hf
+    exact ⟨WFD_of_factorial h_reduced hf, TD_of_factorial h_reduced hf,
+           CFI_of_factorial h_reduced hf⟩
+
+/-- **The characterization theorem, final form**: over a reduced commutative
+    monoid — with no atomicity or chain condition assumed — the four axioms
+    {WFD, TD, CFI, CPL⁺} hold iff M is factorial with countably infinite
+    atom set, i.e., iff M ≅ (ℕ, ×). Atomicity and tower faithfulness are derived from
+    WFD (`Atomic_of_WFD`, `WFD_implies_tower_faithful`); the backward direction
+    supplies WFD from factoriality (`WFD_of_factorial`). -/
+theorem thm_A_iff_B {M : Type*} [CommMonoid M]
+    (h_reduced : Reduced M) :
+    (WFD M ∧ TD M ∧ CFI M ∧ CCA M) ↔
+    (Factorial M ∧ (Atoms M).Countable ∧ Set.Infinite (Atoms M)) := by
+  constructor
+  · rintro ⟨h1, h2, h3, h4⟩
+    exact thm_A_implies_B h_reduced (Atomic_of_WFD h1)
+      (WFD_implies_tower_faithful h_reduced h1) h2 h3 h4 h1
+  · rintro ⟨hf, hc, hi⟩
+    exact ⟨WFD_of_factorial h_reduced hf, TD_of_factorial h_reduced hf,
+           CFI_of_factorial h_reduced hf,
+           CCA_of_atoms_countably_infinite h_reduced hc hi⟩
 
 end

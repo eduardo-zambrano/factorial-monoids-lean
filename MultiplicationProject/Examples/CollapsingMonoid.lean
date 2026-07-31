@@ -18,7 +18,7 @@ Copyright (c) 2024 Eduardo Zambrano. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Eduardo Zambrano
 
-# Example 4: The Collapsing Monoid (Failure of PP-D only)
+# Example 4: The Collapsing Monoid (Failure of tower faithfulness only)
 
 This file formalizes a REVISED version of Example 10.2 from Section 10 of the paper.
 
@@ -27,7 +27,7 @@ The original example used p₁² = p₁, but this makes p₁ idempotent and thus
 
 **Revised construction:** Use the relation p₁² = p₁³ instead.
 - This keeps p₁ irreducible (p₁ has exponent 1, any non-trivial factorization would need exponent ≥ 2)
-- PP-D fails: p₁² = p₁³ violates injectivity of the power map
+- tower faithfulness fails: p₁² = p₁³ violates injectivity of the power map
 - The monoid is atomic: every element has finite atomic factorization
 - APD, CFI, CPL hold for the other atoms p₂, p₃, ...
 
@@ -37,12 +37,12 @@ The original example used p₁² = p₁, but this makes p₁ idempotent and thus
 - `collapsing_reduced`: The monoid is reduced
 - `collapsing_atomic`: The monoid is atomic
 - `collapsing_APD`: The monoid satisfies APD
-- `collapsing_not_PPD`: The monoid does NOT satisfy PP-D
+- `collapsing_not_tower_faithful`: The monoid does NOT satisfy tower faithfulness
 - `collapsing_CFI`: The monoid satisfies CFI
 - `collapsing_CPL`: The monoid satisfies CPL
 -/
 
-import MultiplicationProject.Basic
+import MultiplicationProject.AxiomsNecessity
 import Mathlib.Data.Finsupp.Basic
 
 
@@ -685,9 +685,9 @@ theorem collapsing_APD : APD CollapsingMonoid := by
         omega
       simp [hm_eq_n]
 
-/-- UAB holds: If p^k = q^m for atoms p, q with k, m ≥ 1, then p = q.
+/-- TD holds: If p^k = q^m for atoms p, q with k, m ≥ 1, then p = q.
     The collapsing relation p₁² = p₁³ is within a single tower, not across atoms. -/
-theorem collapsing_UAB : UAB CollapsingMonoid := by
+theorem collapsing_TD : TD CollapsingMonoid := by
   intro p q hp hq k m hk hm hpow
   rw [atoms_eq] at hp hq
   simp only [Set.mem_union, Set.mem_singleton_iff, Set.mem_setOf_eq] at hp hq
@@ -721,11 +721,11 @@ theorem collapsing_UAB : UAB CollapsingMonoid := by
       · simp only [Finsupp.single_eq_of_ne hnm] at hn
         omega
 
-/-- PP-D fails: p₁² = p₁³. -/
-theorem collapsing_not_PPD : ¬ PP_D CollapsingMonoid := by
-  intro hppd
+/-- tower faithfulness fails: p₁² = p₁³. -/
+theorem collapsing_not_tower_faithful : ¬ TowerFaithful CollapsingMonoid := by
+  intro htf
   have hp1_atom : p1 ∈ Atoms CollapsingMonoid := by rw [atoms_eq]; simp
-  have h := hppd p1 hp1_atom
+  have h := htf p1 hp1_atom
   have h23 : p1 ^ 2 = p1 ^ 3 := by
     rw [pow_p1, pow_p1]
     apply ext' <;> simp
@@ -1248,6 +1248,45 @@ theorem collapsing_CPL : CPL CollapsingMonoid := by
         omega
       have hcontra : i.val = j.val := hm_i.symm.trans hm_j
       omega
+
+/-! ## WFD fails, and the monoid is not factorial
+
+The collapse p₁² = p₁³ is a strict self-division: p₁² = p₁² · p₁ with p₁ a
+non-unit. Hence WFD fails, and this monoid shows that WFD is
+indispensable in the characterization theorem: it satisfies all three
+axioms (TD, CFI, CPL⁺) and is reduced and atomic, yet is not factorial. -/
+
+theorem collapsing_not_WFD : ¬ WFD CollapsingMonoid := by
+  intro h
+  exact not_strictDvd_self_of_WFD h (p1 * p1) ⟨p1, p1_not_isUnit, p1_sq_eq_p1_cubed⟩
+
+theorem collapsing_not_factorial : ¬ Factorial CollapsingMonoid :=
+  fun h => collapsing_not_tower_faithful (tower_faithful_of_factorial collapsing_reduced h)
+
+/-! ## CPL⁺ holds -/
+
+/-- The atom family pn is injective. -/
+lemma pn_injective : Function.Injective pn := by
+  intro m n h
+  have h1 := congrArg CollapsingMonoid.exponents h
+  simp only [pn_exponents] at h1
+  exact (Finsupp.single_left_inj one_ne_zero).mp h1
+
+instance : Countable CollapsingMonoid := by
+  have hinj : Function.Injective
+      (fun x : CollapsingMonoid => (x.exp_p1, x.exponents)) := by
+    intro a b h
+    cases a; cases b
+    simp only [Prod.mk.injEq] at h
+    simp [h.1, h.2]
+  exact hinj.countable
+
+/-- CPL⁺ holds: the atom set is countably infinite, so an enumeration of the
+    atoms is a countable coprime basis. -/
+theorem collapsing_CCA : CCA CollapsingMonoid :=
+  CCA_of_atoms_countably_infinite collapsing_reduced (Set.to_countable _)
+    (Set.infinite_of_injective_forall_mem pn_injective
+      (fun m => (pn_irreducible m : pn m ∈ Atoms CollapsingMonoid)))
 
 end CollapsingMonoid
 

@@ -15,7 +15,7 @@ This file contains helper lemmas for coprimality, support, and blockwise CFI.
 - Blockwise support and coprimality lemmas for CFI
 
 Note: The CancelCommMonoid-based `Prop_CFI_implies_PPP` has been removed.
-For System B, use `APD_implies_PPP` from Basic.lean instead.
+For System B, use `APD_implies_towers_factorially_closed` from Basic.lean instead.
 
 Some proofs were completed with assistance from Aristotle (Harmonic's AI theorem prover).
 -/
@@ -429,7 +429,7 @@ lemma not_dvd_implies_coprime {M : Type*} [CommMonoid M] (_h_reduced : Reduced M
 end AristotleLemmas
 
 -- Note: Prop_CFI_implies_PPP (CancelCommMonoid version) removed.
--- Use APD_implies_PPP from Basic.lean instead for System B.
+-- Use APD_implies_towers_factorially_closed from Basic.lean instead for System B.
 
 /-!
 ## Corollaries (easy after PP-P)
@@ -444,7 +444,7 @@ Once PP-P is established, these follow easily.
 
     TODO: Complete the case j ≥ 2 in a future Aristotle session. -/
 lemma atom_dvd_power_eq {M : Type*} [CommMonoid M] (_h_reduced : Reduced M)
-    (h_ppp : PP_P M) {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M)
+    (h_ppp : TowersFactoriallyClosed M) {p q : M} (hp : p ∈ Atoms M) (hq : q ∈ Atoms M)
     {k : ℕ} (h_dvd : q ∣ p ^ k) :
     q = p := by
   obtain ⟨m, hm⟩ := h_dvd
@@ -467,7 +467,7 @@ lemma atom_dvd_power_eq {M : Type*} [CommMonoid M] (_h_reduced : Reduced M)
 
 /-- Support of p^k is contained in {p}. -/
 lemma Support_Power_Subset {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    (h_ppp : PP_P M) (p : M) (hp : p ∈ Atoms M) (k : ℕ) :
+    (h_ppp : TowersFactoriallyClosed M) (p : M) (hp : p ∈ Atoms M) (k : ℕ) :
     Support (p ^ k) ⊆ {p} := by
   intro q ⟨hq_atom, hq_dvd⟩
   simp only [Set.mem_singleton_iff]
@@ -475,7 +475,7 @@ lemma Support_Power_Subset {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
 
 /-- If Support(x) ⊆ {p}, then x ∈ ⟨p⟩. -/
 lemma Support_Singleton_Implies_Power {M : Type*} [CommMonoid M] (h_reduced : Reduced M)
-    (h_atomic : Atomic M) (_h_ppp : PP_P M) (p : M) (_hp : p ∈ Atoms M) (x : M)
+    (h_atomic : Atomic M) (_h_ppp : TowersFactoriallyClosed M) (p : M) (_hp : p ∈ Atoms M) (x : M)
     (hx : Support x ⊆ {p}) :
     x ∈ Submonoid.powers p := by
   by_cases hxu : IsUnit x
