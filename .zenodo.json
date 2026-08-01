@@ -1,0 +1,29 @@
+{
+  "title": "Factorial Monoids and (N,x): An Axiomatic Characterization — Lean 4 Formalization",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Zambrano, Eduardo",
+      "affiliation": "California Polytechnic State University, San Luis Obispo"
+    }
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "factorial monoid",
+    "unique factorization",
+    "free commutative monoid",
+    "atomic monoid",
+    "unit-cancellative monoid",
+    "Lean 4",
+    "formal verification",
+    "Mathlib"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://eduardo-zambrano.github.io/factorial-monoids-lean/",
+      "resource_type": "other"
+    }
+  ],
+  "description": "A complete, sorry-free Lean 4 formalization of the paper 'Factorial Monoids and (N,x): An Axiomatic Characterization' (E. Zambrano, under review at Semigroup Forum). Main theorem, machine-checked over reducedness alone: a reduced commutative monoid is factorial if and only if it satisfies (WFD) well-founded divisibility, (TD) tower disjointness, and (CFI) coprime factorization independence; adding (CCA) coprime coverage of the atoms characterizes the multiplicative positive integers exactly. Every numbered statement of the paper carries its Lean identifier; the five independence counterexamples are fully verified; an axiom audit shows all headline theorems depend only on propext, Classical.choice, and Quot.sound. An interactive dependency map of the proof accompanies the repository."
+}

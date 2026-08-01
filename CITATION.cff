@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this formalization, please cite it using the metadata below."
+type: software
+title: "Factorial Monoids and (N,x): An Axiomatic Characterization — Lean 4 Formalization"
+authors:
+  - family-names: Zambrano
+    given-names: Eduardo
+    affiliation: "California Polytechnic State University, San Luis Obispo"
+license: Apache-2.0
+repository-code: "https://github.com/eduardo-zambrano/factorial-monoids-lean"
+url: "https://eduardo-zambrano.github.io/factorial-monoids-lean/"
+version: 1.0.0
+date-released: 2026-07-31
+keywords:
+  - factorial monoid
+  - unique factorization
+  - free commutative monoid
+  - atomic monoid
+  - unit-cancellative monoid
+  - Lean 4
+  - formal verification
+  - Mathlib
+abstract: >-
+  A complete, sorry-free Lean 4 formalization of the paper "Factorial
+  Monoids and (N,x): An Axiomatic Characterization" (E. Zambrano,
+  under review at Semigroup Forum): a reduced commutative monoid is
+  factorial if and only if it satisfies (WFD), (TD), and (CFI), and
+  the four axioms {WFD, TD, CFI, CCA} hold if and only if the monoid
+  is isomorphic to the multiplicative positive integers. Includes all
+  five independence counterexamples and an interactive dependency map
+  of the proof.
