@@ -1,5 +1,7 @@
 # Factorial Monoids and (ℕ, ×): An Axiomatic Characterization — Lean 4 Formalization
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21732883.svg)](https://doi.org/10.5281/zenodo.21732883)
+
 This repository contains a complete, sorry-free Lean 4 formalization of the paper
 
 > Eduardo Zambrano, *Factorial Monoids and (ℕ, ×): An Axiomatic Characterization*, under review at Semigroup Forum.
@@ -123,7 +125,11 @@ Lean identifiers follow the revised paper's nomenclature. The initial public ver
 
 ## Citation
 
-If you use this formalization, please cite the paper (bibliographic details will be updated upon publication). Zenodo DOIs for the formalization and for the interactive proof map are forthcoming.
+If you use this formalization, please cite the paper (bibliographic details will be updated upon publication) and the archived software:
+
+> Eduardo Zambrano, *Factorial Monoids and (N,x): An Axiomatic Characterization — Lean 4 Formalization*. Zenodo. Concept DOI (all versions): [10.5281/zenodo.21732883](https://doi.org/10.5281/zenodo.21732883); this release (v1.0.0): [10.5281/zenodo.21732884](https://doi.org/10.5281/zenodo.21732884).
+
+Citation metadata is also in [`CITATION.cff`](CITATION.cff). A separate Zenodo DOI for the interactive proof map is forthcoming.
 
 ## License
 
