@@ -129,7 +129,9 @@ If you use this formalization, please cite the paper (bibliographic details will
 
 > Eduardo Zambrano, *Factorial Monoids and (N,x): An Axiomatic Characterization — Lean 4 Formalization*. Zenodo. Concept DOI (all versions): [10.5281/zenodo.21732883](https://doi.org/10.5281/zenodo.21732883); this release (v1.0.0): [10.5281/zenodo.21732884](https://doi.org/10.5281/zenodo.21732884).
 
-Citation metadata is also in [`CITATION.cff`](CITATION.cff). A separate Zenodo DOI for the interactive proof map is forthcoming.
+Citation metadata is also in [`CITATION.cff`](CITATION.cff). The interactive proof map is archived separately:
+
+> Eduardo Zambrano, *Theorem 4.1 Dependency Map — Interactive Proof Visualization*. Zenodo. Concept DOI (all versions): [10.5281/zenodo.21733637](https://doi.org/10.5281/zenodo.21733637); v1.0.0: [10.5281/zenodo.21733638](https://doi.org/10.5281/zenodo.21733638). CC-BY-4.0.
 
 ## License
 
